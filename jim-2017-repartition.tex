@@ -60,9 +60,26 @@ Le résumé doit être placé en haut de la colonne gauche et doit contenir entr
 
 \subsection{Méchanismes de synchronisation}
 - Cas possibles : 
+
 \begin{lstlisting}
-C1 -> t1 -> C3
-C2 -> t1 -> C4
+C1 ---t--- C3
+C2 ---|--- C4
+\end{lstlisting}
+* Mode free ou synchronisé : pour chaque client ? 
+
+Cas 1 : 
+\begin{lstlisting}
+C1 ---t--- C3
+\end{lstlisting}
+C1 libre, C3 libre : dès que t est vrai, un message est envoyé au master qui envoie à C3 le trigger. C1 s'est déjà arrêté.
+Voire, ils peuvent se trig eux même en asynchrone.
+
+C1 synchro, C3 synchro : dès que t est vrai, C1 calcule la date minimale à laquelle C3 peut être notifié, envoie le message et fixe ce temps de son côté.
+
+Cas 2 : 
+\begin{lstlisting}
+C1 ---t--- C3
+C2 ---|
 \end{lstlisting}
 
 * Synchronisation de la fin
