@@ -1,0 +1,85 @@
+\documentclass{article}
+\usepackage{fontspec}
+\usepackage{jim,amsmath}
+\usepackage[francais]{babel}
+%\usepackage{pxfonts}
+\usepackage{graphicx}
+
+% Title.
+% ------
+\title{Écriture et exécution répartie de scénarios interactifs}
+
+\threeauthors
+  {Auteur 1} {Organisme \\ Adresse électronique}
+  {Auteur 2} {Organisme \\ Adresse électronique}
+  {Auteur 3} {Organisme \\ Adresse électronique}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+Le résumé doit être placé en haut de la colonne gauche et doit contenir entre 150 et 200 mots.
+\end{abstract}
+\section{Introduction}
+\subsection{Contexte}
+
+\subsubsection{Horloges}
+\subsubsection{Synchronisation de médias}
+\subsection{État de l'art}
+\subsubsection{Rappel du modèle d'i-score}
+\subsubsection{Répartition à l'édition}
+\subsubsection{Répartition à l'exécution}
+\subsubsection{Lien entre la répartition à l'édition et la répartition à l'exécution}
+
+\section{Taxonomie et étude de cas}
+-> installation en son réparti ?
+- Problème de la latence entre i-score et raspberry, + utilisation de bande passante.
+- Cas des applis de téléphone : un objet qui s'exécute sur plusieurs machines en parallèle dont on veut aggréger les résultats
+- Approche alternative avec application mobile.
+\section{Approche}
+- Groupe, client
+\subsection{Édition}
+- Partage de file undo - redo
+
+\subsection{Exécution}
+
+\subsection{Introduction de primitives réparties dans i-score}
+- On souhaite modifier le moins possible le modèle pour les utilisateurs
+- Notion de groupe
+- Problème des devices
+
+\subsection{Méchanismes de synchronisation}
+- Cas possibles : 
+
+C1 -> t1 -> C3
+C2 -> t1 -> C4
+
+* Synchronisation de la fin
+* Synchronisation du début de la suite
+
+Possibilité : synchronisation via démon externe (PTP, NTP...), mais pas toujours possible (on ne peut pas supposer que l'utilisateur a les droits pour changer l'horloge sur sa machine).
+
+Synchronous ethernet
+
+Avoir une horloge propre à i-score ? Mais du coup maintenant il faut la synchroniser à l'horloge système.
+
+
+\section{Performance}
+- Comparaison de l'algorithme "simple" et de l'algorithme avec retard
+\section{Citations}
+
+Toutes les références bibliographiques des citations devront être listées dans la section "\textsc{References}", numérotées et en ordre alphabétique. Toutes les références  listées devront être citées dans le texte. Quand  vous vous référez au document dans le texte, précisez son numéro \cite{Author:00}.
+
+\begin{thebibliography}{2}
+
+\bibitem {Author:00} Author, E.
+''Titre du papier'',
+{\it Proceedings of the International Symposium on Music Information
+Retrieval}, Plymouth, USA, 2000.
+
+\bibitem{Someone:02} Untel, A.
+{\it  Titre du livre}.
+L'Armada, Paris, 2005.
+
+\end{thebibliography}
+
+\end{document}
