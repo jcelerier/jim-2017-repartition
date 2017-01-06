@@ -58,6 +58,28 @@ Le résumé doit être placé en haut de la colonne gauche et doit contenir entr
 
 - Problème des devices
 
+- implémentation : on rajoute des délais dans les expressions.
+
+Cas synchrone : 
+* Sous-expression devient vraie
+* Expression fixe une date possible pour le réseau et notifie les autres puis se fixe au bon délai.
+
+Cas asynchrone : 
+* Sous-expression devient vraie
+* Expression envoie un message aux autres et se lance immédiatement.
+Il faut définir sur quelle machine l'expression est validée.
+
+- Cas de la borne max : trigger, bof
+
+Groupes pour triggers : problème du consensus. Voir notamment Paxos, Raft... 
+% https://github.com/apache/kudu
+
+Pour l'instant : group leader ? ou bien tous se communiquent l'information et prennent la décision en fonction de cette information ?
+
+- Latence : prendre moyenne et écart-type sur les dix dernières valeurs ? Ou juste dernière valeur ?
+En LAN gigabit on est en général < à une milliseconde.
+
+- Pour l'édition temps-réel, on doit permettre d'appliquer des "filtres" (par exemple qui vont rajouter une sur-expression, etc)
 \subsection{Méchanismes de synchronisation}
 - Cas possibles : 
 
@@ -86,9 +108,15 @@ C2 ---|
 
 * Synchronisation du début de la suite
 
+En pratique, on n'implémente que la possibilité de synchro / désynchro toute une time node ; dire qu'une granularité plus fine est possible mais que l'intérêt n'apparaît pas en pratique dans les applications (et complexifierait l'UI pour rien).
+
+Question principale : pour un time-node, comment choisit-on sur quelle machine une condition doit être vérifiée ? Possibilité de conditions groupées : faut-il que ce soit interne au formalisme (i.e. une case à cocher) ou externe (on dit explicitement \lstinline|machine1:/truc && machine2:/truc|)
+
 Possibilité : synchronisation via démon externe (PTP, NTP...), mais pas toujours possible (on ne peut pas supposer que l'utilisateur a les droits pour changer l'horloge sur sa machine).
 
 Synchronous ethernet
+
+Ableton Link : synchro sur les ticks musicaux 
 
 Avoir une horloge propre à i-score ? Mais du coup maintenant il faut la synchroniser à l'horloge système. 
 
@@ -108,6 +136,7 @@ On ne synchronise qu'à chaque point d'entrée / de sortie d'un groupe de contra
 
 \section{Performance}
 - Comparaison de l'algorithme "simple" et de l'algorithme avec retard
+
 \section{Citations}
 
 Toutes les références bibliographiques des citations devront être listées dans la section "\textsc{References}", numérotées et en ordre alphabétique. Toutes les références  listées devront être citées dans le texte. Quand  vous vous référez au document dans le texte, précisez son numéro \cite{Author:00}.
