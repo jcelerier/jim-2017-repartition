@@ -3,8 +3,11 @@
 \usepackage{jim,amsmath}
 \usepackage[francais]{babel}
 \usepackage{listings}
+\usepackage{diagbox}
+\usepackage{booktabs}
 %\usepackage{pxfonts}
 \usepackage{graphicx}
+\usepackage{tikz}
 
 % Title.
 % ------
@@ -112,6 +115,38 @@ En pratique, on n'implémente que la possibilité de synchro / désynchro toute 
 
 Question principale : pour un time-node, comment choisit-on sur quelle machine une condition doit être vérifiée ? Possibilité de conditions groupées : faut-il que ce soit interne au formalisme (i.e. une case à cocher) ou externe (on dit explicitement \lstinline|machine1:/truc && machine2:/truc|)
 
+\subsubsection{Cas ou il y a plusieurs machines dans un groupe}
+Attributs d'une expression : 
+\begin{itemize}
+    \item Qui vérifie cette expression : chaque machine individuellement, toutes les machines d'un groupe, n'importe quelle machine d'un groupe 
+\end{itemize}
+
+Séparer les expressions et les time-node : notamment pour le cas de la borne max, ou on doit avertir d'autres machines par la suite.
+
+Deux axes : 
+\begin{figure}[h]
+\begin{tabular}{c|c|c}
+\diagbox{Décision}{Sync} & Oui & Non \\
+\midrule
+Locale & 1 & 2 \\
+\midrule
+Partagée & 3 & 4\\        
+\end{tabular}
+\end{figure}
+\begin{itemize}
+    \item Décision locale : Pour un trigger, soit tout le scénario est local (donc même contrainte avant / après et certains ordis n'exécutent pas du tout ce scénario), soit le premier à avoir un résultat avertit les suivants.
+    \item Décision partagée : tous les éléments d'un groupe doivent prendre une décision avec une politique donnée : soit tous doivent vérifier la condition, soit un seul.
+    \item Décision synchrone : On veut que les éléments s'arrêtent et démarrent le plus proche possible d'une même date en wall clock.
+    \item Décision asynchrone : On veut que les éléments s'arrêtent et démarrent le plus vite possible dès qu'une information est disponible.
+\end{itemize}
+
+\begin{enumerate}
+\item Décision locale synchrone : pas de sens
+\item Décision locale asynchrone : pas de sens... 
+\item Décision partagée synchrone : toutes les machines attendent qu'un unique choix soit effectué pour le résultat de l'expression
+\item Décision partagée asynchrone
+\end{enumerate}
+
 Possibilité : synchronisation via démon externe (PTP, NTP...), mais pas toujours possible (on ne peut pas supposer que l'utilisateur a les droits pour changer l'horloge sur sa machine).
 
 Synchronous ethernet
@@ -140,7 +175,11 @@ On ne synchronise qu'à chaque point d'entrée / de sortie d'un groupe de contra
 \section{Citations}
 
 Toutes les références bibliographiques des citations devront être listées dans la section "\textsc{References}", numérotées et en ordre alphabétique. Toutes les références  listées devront être citées dans le texte. Quand  vous vous référez au document dans le texte, précisez son numéro \cite{Author:00}.
-
+\begin{figure}
+    \begin{tikzpicture}
+   \input{/tmp/aaa.tex}
+    \end{tikzpicture}
+\end{figure}
 \begin{thebibliography}{2}
 
 \bibitem {Author:00} Author, E.
