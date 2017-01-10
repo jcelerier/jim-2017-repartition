@@ -39,12 +39,20 @@ Vocabulaire. Prendre article SMC.
 \subsubsection{Répartition à l'exécution}
 \subsubsection{Lien entre la répartition à l'édition et la répartition à l'exécution}
 
+\begin{figure}[h]
+	\centering
+	\begin{tikzpicture}
+	\input{/tmp/wxc.tex}
+	\end{tikzpicture}
+\end{figure}
 \section{Taxonomie et étude de cas}
 -> installation en son réparti ?
 
 - Problème de la latence entre i-score et raspberry, + utilisation de bande passante.
 
 - Cas des applis de téléphone : un objet qui s'exécute sur plusieurs machines en parallèle dont on veut aggréger les résultats
+
+- Donner la possibilité de faire un dialogue (boucle avec un coup un trigger qui vient de A, un coup un trigger qui vient de B, etc)
 
 - Approche alternative avec application mobile.
 
@@ -92,6 +100,20 @@ Différence entre synchro partielle et complète :
 Dans tous les cas, cela se fait au niveau des groupes, et il peut y avoir plusieurs machines par groupe.
 Donc il faut un méchanisme de décision au niveau du groupe.
 -> pourquoi ne pas avoir la même chose au niveau des mappings (et pour tout ce qui n'est pas fixé de manière générale ?)
+
+
+\subsubsection{Expressions et interactivité}
+Dans le cas ou un scénario est exécuté intégralement en parallèle par différentes machines, il n'y a pas de problème : chacune vérifie les expressions en fonction des données dont elle dispose, et les valide à l'instant ou elle le souhaite. C'est utile si par exemple on veut avoir plusieurs téléphones qui font tous tourner un scénario semblable, mais chaque individu peut choisir de faire avancer le scénario au rythme ou il le souhaite.
+
+Dans le cas ou on a un partage de certaines lignes temporelles par certaines machines, le problème de la synchronisation des éléments de pose.
+
+\begin{itemize}
+	\item Prise de décision : s'il n'y a qu'une seule ligne temporelle, chaque expression doit n'avoir qu'une valeur de vérité. Il doit donc y avoir un consensus, de une, plusieurs, ou toutes machines, sur la valeur de cette expression. De même pour la vitesse d'exécution des éléments.
+	\item On peut supposer que des sous-parties d'un scénario pourraient être exécutées entièrement par une machine ou groupe.
+	
+\end{itemize}
+
+Note : abstraire la notion de consensus au sein d'un groupe.
 
 \subsubsection{Horloges}
 
