@@ -1,14 +1,16 @@
 \documentclass{article}
 \usepackage{fontspec}
 \usepackage{jim,amsmath}
-\usepackage[francais]{babel}
+\usepackage[french]{babel}
 \usepackage{listings}
 \usepackage{diagbox}
+\usepackage{caption}
 \usepackage{booktabs}
+\usepackage{microtype}
 %\usepackage{pxfonts}
 \usepackage{graphicx}
 \usepackage{tikz}
-
+\DeclareCaptionType{scenario}[Scénario]
 % Title.
 % ------
 \title{Écriture et exécution répartie de scénarios interactifs}
@@ -28,8 +30,11 @@ Le résumé doit être placé en haut de la colonne gauche et doit contenir entr
 
 \subsubsection{Horloges}
 \subsubsection{Synchronisation de médias}
+- pas pour l'instant... doivent être au même endroit sur la même machine.
+Ableton Link ? Netjack ?
 \subsection{État de l'art}
 \subsubsection{Rappel du modèle d'i-score}
+Vocabulaire. Prendre article SMC.
 \subsubsection{Répartition à l'édition}
 \subsubsection{Répartition à l'exécution}
 \subsubsection{Lien entre la répartition à l'édition et la répartition à l'exécution}
@@ -43,18 +48,93 @@ Le résumé doit être placé en haut de la colonne gauche et doit contenir entr
 
 - Approche alternative avec application mobile.
 
+- Lister les cas. D'abord non interactif (partage uniquement des processus), puis interactif.
+
 \section{Approche}
 - Groupe, client
 
 - Maître-esclave
+
+- Dire qu'on peut toujours le faire "à la main" dans i-score, mais que c'est long et complexe.
+
+- La manière dont la répartition se fait dépend du processus.
+
 \subsection{Édition}
 - Partage de file undo - redo
 
 - Un seul "document" logique sur lequel tout le monde travail. Comme google docs.
 
 \subsection{Exécution}
+\subsubsection{Processus de contenu}
+Automation, mapping, JS, audio...
+
+Le processus s'exécute tel quel pour toutes les machines auquel il est assigné, 
+et ne s'exécute pas pour les autres.
+
+\subsubsection{Processus Scenario}
+Trois niveaux de synchronisation : 
+
+\begin{itemize}
+    \item Aucune synchronisation : les machines n'étant pas associées à ce processus ne l'exécutent pas, celles qui y sont associées l'exécutent toutes de manière indépendante. Note : scénarios hiérarchiques ? 
+    \item Synchronisation partielle : il peut y avoir plusieurs lignes temporelles dans un même scénario qui doivent se resynchroniser. Les annotations donnent l'emplacement d'exécution, et de vérification des expressions.
+    \item Synchronisation complète : il n'y a qu'une seule "ligne temporelle" pour toutes les machines. Les annotations de machines indiquent l'emplacement d'exécution.
+\end{itemize}
+
+Problème transverse : ignorer ou non la hiérarchie ? 
+
+Différence entre synchro partielle et complète : 
+\begin{itemize}
+    \item Exécution des triggers
+    \item Validité des conditions
+    \item Changement de vitesse d'exécution des contraintes temporelles
+\end{itemize}
+
+Dans tous les cas, cela se fait au niveau des groupes, et il peut y avoir plusieurs machines par groupe.
+Donc il faut un méchanisme de décision au niveau du groupe.
+-> pourquoi ne pas avoir la même chose au niveau des mappings (et pour tout ce qui n'est pas fixé de manière générale ?)
+
+\subsubsection{Horloges}
+
+Synchro d'horloges de deux machines dont une qui ralenti, si elles exécutent le même 
+scénario ? Il faut les recaler régulièrement. 
+
+Possibilité : externe (NTP, etc) ou interne.
+
+Recaler dès qu'on accumule du retard ?
+On peut introduire un recalage sur la master clock entre chaque tick.
 
 \subsection{Introduction de primitives réparties dans i-score}
+
+\subsubsection{Répartition des contenus dans le cas non-interactif}
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}
+    \input{scenarios/simple.tex}
+    \end{tikzpicture}
+    \captionof{scenario}{Deux contraintes temporelles se suivent}
+    \label{scenar.simple}
+\end{figure}
+
+\begin{itemize}
+    \item Cas partagé : toutes les machines vont exécuter l'ensemble du scénario en parallèle.
+    \item Cas synchronisé : chaque machine va exécuter une partie du scénario : par exemple, une machine exécute $C_1$ et une autre $C_2$.
+\end{itemize}
+
+On sépare donc les objets structurants, des objets possédant des données (par exemple, une automation).
+
+
+\subsubsection{Répartition des contenus dans le cas interactif}
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}
+    \input{scenarios/general.tex}
+    \end{tikzpicture}
+    \captionof{scenario}{Interactions et conditions}
+    \label{scenar.general}
+\end{figure}
+
+Un problème de synchronisation
+
 - On souhaite modifier le moins possible le modèle pour les utilisateurs
 
 - Notion de groupe
@@ -175,11 +255,7 @@ On ne synchronise qu'à chaque point d'entrée / de sortie d'un groupe de contra
 \section{Citations}
 
 Toutes les références bibliographiques des citations devront être listées dans la section "\textsc{References}", numérotées et en ordre alphabétique. Toutes les références  listées devront être citées dans le texte. Quand  vous vous référez au document dans le texte, précisez son numéro \cite{Author:00}.
-\begin{figure}
-    \begin{tikzpicture}
-   \input{/tmp/aaa.tex}
-    \end{tikzpicture}
-\end{figure}
+
 \begin{thebibliography}{2}
 
 \bibitem {Author:00} Author, E.
