@@ -9,6 +9,7 @@
 \usepackage{microtype}
 %\usepackage{pxfonts}
 \usepackage{graphicx}
+\usepackage{hyperref}
 \usepackage{tikz}
 \DeclareCaptionType{scenario}[Scénario]
 % Title.
@@ -26,26 +27,9 @@
 Le résumé doit être placé en haut de la colonne gauche et doit contenir entre 150 et 200 mots.
 \end{abstract}
 \section{Introduction}
-\subsection{Contexte}
+\subsection{Problématique}
 
-\subsubsection{Horloges}
-\subsubsection{Synchronisation de médias}
-- pas pour l'instant... doivent être au même endroit sur la même machine.
-Ableton Link ? Netjack ?
-\subsection{État de l'art}
-\subsubsection{Rappel du modèle d'i-score}
-Vocabulaire. Prendre article SMC.
-\subsubsection{Répartition à l'édition}
-\subsubsection{Répartition à l'exécution}
-\subsubsection{Lien entre la répartition à l'édition et la répartition à l'exécution}
-
-\begin{figure}[h]
-	\centering
-	\begin{tikzpicture}
-	\input{/tmp/wxc.tex}
-	\end{tikzpicture}
-\end{figure}
-\section{Taxonomie et étude de cas}
+\subsection{Études de cas}
 -> installation en son réparti ?
 
 - Problème de la latence entre i-score et raspberry, + utilisation de bande passante.
@@ -56,36 +40,106 @@ Vocabulaire. Prendre article SMC.
 
 - Approche alternative avec application mobile.
 
+- Faciliter l'écriture de programmes qui s'exécutent sur des machines embarquées
+
 - Lister les cas. D'abord non interactif (partage uniquement des processus), puis interactif.
 
+\subsection{État de l'art}
+\subsubsection{Rappel du modèle d'i-score}
+Vocabulaire. Prendre article SMC.
+%\subsubsection{Répartition à l'édition}
+\subsubsection{Répartition à l'exécution}
+%\subsubsection{Lien entre la répartition à l'édition et la répartition à l'exécution}
+
+\subsubsection{Horloges}
+Problème de l'horloge : 
+\begin{itemize}
+\item Si on utilise l'horloge système, pas de garantie qu'elle soit bien synchronisée. 
+Et NTP pas dispo partout (on n'a pas forcément les droits sur un téléphone pour changer l'heure).
+Horloge i-score se resynchronise déjà en cas de délai sur une machine.
+\item Si on utilise une horloge interne, problème de la synchronisation avec l'horloge système (pour le tick)
+\end{itemize}
+\url{http://queue.acm.org/detail.cfm?id=2745385}
+\url{http://radar.oreilly.com/2012/10/google-spanner-relational-database.html}
+\url{http://www.ntp.org/ntpfaq/NTP-s-sw-clocks-quality.htm}
+
+Faire la relation entre notre système et le problème CAP : \url{https://en.wikipedia.org/wiki/PACELC_theorem}
+
+Horloges logiques : équivalent à envoyer une timestamp à chaque tick (on arrive donc à un méchanisme de vector clock approximatif). 
+
+Synchro d'horloges de deux machines dont une qui ralenti, si elles exécutent le même 
+scénario ? Il faut les recaler régulièrement. 
+
+Possibilité : externe (NTP, etc) ou interne : \url{https://github.com/ethanlim/NetworkTimeProtocol}
+
+Recaler dès qu'on accumule du retard ?
+On peut introduire un recalage sur la master clock entre chaque tick.
+
+\subsubsection{Problématique de la sécurité}
+
+\subsubsection{Synchronisation de médias}
+- pas pour l'instant... doivent être au même endroit sur la même machine.
+Ableton Link ? Netjack ?
+
 \section{Approche}
-- Groupe, client
+\subsection{Notions introduites}
+\subsubsection{Groupe}
+\subsubsection{Client}
 
-- Maître-esclave
+\subsection{Topologie}
+Maître-esclave pour l'édition.
 
-- Dire qu'on peut toujours le faire "à la main" dans i-score, mais que c'est long et complexe.
+Pour l'exécution : dans certains cas deux machines peuvent échanger directement.
+Il faut décrire ces cas.
 
-- La manière dont la répartition se fait dépend du processus.
+Si groupes avec plusieurs machines : "group leader" ? responsable de la communication ? avoir un "plus court chemin" permanent ?
 
-\subsection{Édition}
-- Partage de file undo - redo
 
-- Un seul "document" logique sur lequel tout le monde travail. Comme google docs.
+\subsection{Fondements}
+Première approche basées sur réseau de Petri.
 
-\subsection{Exécution}
-\subsubsection{Processus de contenu}
+Puis migration du modèle d'i-score maintenant autonome.
+
+Il est possible d'implément ce méchanisme de répartition purement avec les primitives dont on dispose dans i-score, 
+mais c'est prohibitoire pour les utilisateurs.
+
+Différentes possibilités de répartition sont disponibles selon les types de processus.
+
+\subsection{Modèle}
+i-score se base sur une approche orientée document.
+
+On choisit de répartir nos objets autour d'un même document partagé par toutes les instances du réseau, 
+à la manière des logiciels d'édition tels que Google Docs. %CITE
+
+Cela ne pose pas de problème de mémoire, même sur de l'embarqué : 
+les scénarios i-score sont très compacts (en général quelques dizaines de kilo-octets).
+
+\subsubsection{Répartition de l'édition du modèle}
+- Partage de file undo - redo. Transformations opérationnelles. %CITE
+
+- Autres approches : partage du modèle lui-même.
+
+\section{Description de l'exécution}
+\subsection{Processus de contenu}
 Automation, mapping, JS, audio...
 
 Le processus s'exécute tel quel pour toutes les machines auquel il est assigné, 
 et ne s'exécute pas pour les autres.
 
-\subsubsection{Processus Scenario}
-Trois niveaux de synchronisation : 
+\subsection{Processus Scenario}
+\subsubsection{Cas interactif}
+Trois niveaux de partage : 
 
 \begin{itemize}
-    \item Aucune synchronisation : les machines n'étant pas associées à ce processus ne l'exécutent pas, celles qui y sont associées l'exécutent toutes de manière indépendante. Note : scénarios hiérarchiques ? 
-    \item Synchronisation partielle : il peut y avoir plusieurs lignes temporelles dans un même scénario qui doivent se resynchroniser. Les annotations donnent l'emplacement d'exécution, et de vérification des expressions.
-    \item Synchronisation complète : il n'y a qu'une seule "ligne temporelle" pour toutes les machines. Les annotations de machines indiquent l'emplacement d'exécution.
+    \item Aucun partage : les machines n'étant pas associées à ce processus ne l'exécutent pas, celles qui y sont associées l'exécutent toutes de manière indépendante. Note : scénarios hiérarchiques ? 
+    \item Partage partiel : il peut y avoir plusieurs lignes temporelles dans un même scénario qui doivent se resynchroniser. Les annotations donnent l'emplacement d'exécution, et de vérification des expressions.
+    \item Partage complet : il n'y a qu'une seule "ligne temporelle" pour toutes les machines. Les annotations de machines indiquent l'emplacement d'exécution.
+\end{itemize}
+
+Deux niveaux de synchronisation : 
+\begin{itemize}
+    \item Asynchrone : dès qu'une information est disponible dans le système (par exemple << une expression se vérifie >>), elle est propagée le plus vite possible aux autres noeuds qui doivent appliquer le résultat de cette information.
+    \item Synchrone : lorsqu'une information est disponible dans le système, elle est propagée de manière à ce que la date absolue de réalisation soit la même pour toutes les machines.
 \end{itemize}
 
 Problème transverse : ignorer ou non la hiérarchie ? 
@@ -101,29 +155,74 @@ Dans tous les cas, cela se fait au niveau des groupes, et il peut y avoir plusie
 Donc il faut un méchanisme de décision au niveau du groupe.
 -> pourquoi ne pas avoir la même chose au niveau des mappings (et pour tout ce qui n'est pas fixé de manière générale ?)
 
+\subsubsection{Cas non-interactif}
+% Cas principalement développé dans rapport de master
+On peut soit utiliser les méthodes de synchronisation décrites précédemment, mais une possibilité s'ajoute : 
+
+Comme on connait les dates effectives auxquelles les objets sont sensés s'exécuter, on peut les fixer à l'avance sur chaque machine. 
+
+\begin{itemize}
+\item Avantage : s'il y a une déconnection, cela va continuer à marcher.
+\item Inconvénient : il suffit d'un peu de délai pour que le début de B peut survenir avant la fin de A. 
+Il est particulièrement important dans ce cas de garder les horloges synchronisées.
+\end{itemize}
 
 \subsubsection{Expressions et interactivité}
 Dans le cas ou un scénario est exécuté intégralement en parallèle par différentes machines, il n'y a pas de problème : chacune vérifie les expressions en fonction des données dont elle dispose, et les valide à l'instant ou elle le souhaite. C'est utile si par exemple on veut avoir plusieurs téléphones qui font tous tourner un scénario semblable, mais chaque individu peut choisir de faire avancer le scénario au rythme ou il le souhaite.
 
-Dans le cas ou on a un partage de certaines lignes temporelles par certaines machines, le problème de la synchronisation des éléments de pose.
+Dans le cas ou on a un partage de certaines lignes temporelles par certaines machines, le problème de la synchronisation des expressions se pose.
 
 \begin{itemize}
-	\item Prise de décision : s'il n'y a qu'une seule ligne temporelle, chaque expression doit n'avoir qu'une valeur de vérité. Il doit donc y avoir un consensus, de une, plusieurs, ou toutes machines, sur la valeur de cette expression. De même pour la vitesse d'exécution des éléments.
+	\item Prise de décision : s'il n'y a qu'une seule ligne temporelle, chaque expression doit n'avoir qu'une valeur de vérité. Il doit donc y avoir un consensus sur la valeur de cette expression. De même pour la vitesse d'exécution des éléments.
+    
+    Plusieurs algorithmes de consensus sont possibles : 
+    \begin{itemize}
+        \item Au moins une machine valide une expression. 
+        Et spécifiquement, dans le cas des points d'interaction : la première machine qui valide une expression donne le résultat.
+        \item Toutes les machines valident une expression.
+    \end{itemize}
+
 	\item On peut supposer que des sous-parties d'un scénario pourraient être exécutées entièrement par une machine ou groupe.
-	
 \end{itemize}
+Ordonnancement : par timestamps.
+
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}
+    \input{scenarios/trigger-1.tex}
+    \end{tikzpicture}
+    \captionof{scenario}{Des groupes A et B exécutent les deux contraintes temporelles et un groupe C l'expression}
+    \label{scenar.trigger-1}
+\end{figure}
+
+Le scénario~\ref{scenar.trigger-1} peut se résoudre de plusieurs manières.
+
+\begin{itemize}
+    \item Si l'exécution du noeud est résolue de manière asynchrone, toutes les machines de $C$ envoient l'information de trigger à toutes les machines de $A$ et $B$, sans garantie d'ordre. Les triggers se déclenchent immédiatement.
+    
+    Note : si on veut garantir un ordre, ne peut-on pas faire : $C$ stoppe $A$ qui démarre $B$ ? Ou bien si la borne max est atteinte, $A$ stoppe $C$ et déclenche $B$.
+    
+    \item Si l'exécution du noeud est résolue de manière synchrone : 
+    \begin{itemize}
+        \item Si la condition devient vraie, par consensus. On choisit une date, et on fixe l'arrêt des machines de $A$ et le départ des machines de $B$ par rapport à cette date, calculée en fonction des latences relatives. Potentiellement introduire un tick d'écart entre la fin de $A$ et le démarrage de $B$ ?
+        \item Si on atteint la borne max : une machine est nécessairement la première à atteindre cette borne.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Consensus}
+Paxos, Raft sont des algorithmes permettant de garantir un consensus.%CITE
+
+S'il y a synchronisation, on sépare la synchronisation du consensus, de la synchronisation de l'exécution qui suit la résolution de ce consensus : 
+\begin{enumerate}
+    \item Les n\oe uds impliqués dans l'expression décident de la valeur de vérité.
+    \item Une fois cette valeur connue, tous les n\oe uds précédant, suivant, et impliquant l'expression sont inclus dans la décision de la date d'exécution.
+\end{enumerate}
 
 Note : abstraire la notion de consensus au sein d'un groupe.
 
-\subsubsection{Horloges}
-
-Synchro d'horloges de deux machines dont une qui ralenti, si elles exécutent le même 
-scénario ? Il faut les recaler régulièrement. 
-
-Possibilité : externe (NTP, etc) ou interne.
-
-Recaler dès qu'on accumule du retard ?
-On peut introduire un recalage sur la master clock entre chaque tick.
+Cas avancé et non traité ici : si un scénario est exécuté en parallèle par toutes les machines, chaque groupe peut avoir un consensus différent sur chaque trigger.
+On peut rajouter un niveau d'indirection. Le plus général : chaque objet peut être exécuté par N groupes pouvant posséder chacun N clients.
+Si un client est dans deux groupes, comment gérer le conflit ? bof.
 
 \subsection{Introduction de primitives réparties dans i-score}
 
@@ -159,9 +258,9 @@ Un problème de synchronisation
 
 - On souhaite modifier le moins possible le modèle pour les utilisateurs
 
-- Notion de groupe
+- Notion de groupe. Intérêt d'un groupe : s'abstrait des clients qui peuvent se déconnecter / reconnecter.
 
-- Problème des devices
+- Problème des devices. Note : si on se permet d'envoyer des messages OSC quelconques (i.e. pas dans l'arbre), ça peut simplifier des choses. Aussi, permettre devices qui sont juste en mode envoi ? Il faut un autre proto que OSC ou Minuit...
 
 - implémentation : on rajoute des délais dans les expressions.
 
@@ -278,17 +377,8 @@ On ne synchronise qu'à chaque point d'entrée / de sortie d'un groupe de contra
 
 Toutes les références bibliographiques des citations devront être listées dans la section "\textsc{References}", numérotées et en ordre alphabétique. Toutes les références  listées devront être citées dans le texte. Quand  vous vous référez au document dans le texte, précisez son numéro \cite{Author:00}.
 
-\begin{thebibliography}{2}
+%\begin{thebibliography}{2}
 
-\bibitem {Author:00} Author, E.
-''Titre du papier'',
-{\it Proceedings of the International Symposium on Music Information
-Retrieval}, Plymouth, USA, 2000.
-
-\bibitem{Someone:02} Untel, A.
-{\it  Titre du livre}.
-L'Armada, Paris, 2005.
-
-\end{thebibliography}
+%\end{thebibliography}
 
 \end{document}
