@@ -36,12 +36,27 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-Le résumé doit être placé en haut de la colonne gauche et doit contenir entre 150 et 200 mots.
+    La pratique musicale est souvent une opportunité pour interagir et échanger, 
+    avant tout avec d'autres musiciens, et plus récemment avec des algorithmes ou logiciels 
+    disposant d'un certain degré d'autonomie et de liberté.
+    
+    La notation musicale occidentale résout le problème du partage d'information entre musiciens 
+    en séparant une partition en portées; la plupart des logiciels musicaux vont interpréter cette 
+    portée sur une seule machine, en gardant la possibilité de pistes avec des réglages indépendants. 
+    
+    Ce document présente d'une part une généralisation de cette notion de partage aux scénarios interactifs, 
+    et d'autre part une implémentation pratique dans le logiciel i-score, mettant en valeur 
+    les possibilités d'écriture augmentées qu'offre une exécution répartie à un compositeur.
 \end{abstract}
-\section{Introduction}
-\subsection{Problématique}
+\section{Problématique}
+On cherche à définir une sémantique permettant de décrire l'exécution d'une partition interactive sur plusieurs machines, en prenant en compte les exécutions parallèles, c'est-à-dire que deux machines jouent la même chose, de manière synchronisée ou non, ainsi que les exécutions série : une machine joue puis une autre machine joue la suite.
 
-\subsection{Études de cas}
+On parle ici de «jeu» à un niveau abstrait~: on s'intéresse au contrôle de tous types de paramètres et non pas uniquement les paramètres musicaux.
+
+On présentera d'abord plusieurs applications et problématiques pratiques rencontrées par des artistes et auteurs, qui ont motivé ce travail.
+Puis, les possibilités de répartition étudiées seront présentées dans le détail, en analysant l'impact que peuvent avoir les problèmes connus dans le domaine de l'informatique répartie, sur l'écriture de telles partitions. Pour conclure, les performances du système développé seront présentées.
+
+\section{Études de cas}
 -> installation en son réparti ?
 
 - Problème de la latence entre i-score et raspberry, + utilisation de bande passante.
@@ -148,7 +163,7 @@ d'un scénario réparti.
 Pour ce faire, on introduit la notion de \vocab{groupe}. 
 Un groupe est un ensemble de clients.
 
-Les compositeurs ne travaillent jamais directement avec un client, mais toujours au travers d'un groupe qui peut contenir zéro, un, ou plusieurs clients.
+Les compositeurs ne travaillent manipulent jamais directement la notion de client, uniquement celle d'un groupe qui peut contenir zéro, un, ou plusieurs clients.
 
 De manière générale, quand plusieurs clients font partie d'un même groupe, cela signifie qu'ils vont réaliser les mêmes tâches, de manière synchrone ou asynchrone.
 
@@ -181,7 +196,7 @@ Pour l'exécution : dans certains cas deux machines peuvent échanger directemen
 Il faut décrire ces cas.
 
 Si groupes avec plusieurs machines : "group leader" ? responsable de la communication ? avoir un "plus court chemin" permanent ?
-œæ«»
+
 \subsection{Fondements}
 Première approche basées sur réseau de Petri.
 
@@ -413,7 +428,7 @@ avec ou sans partage d'informations entre clients.
 On remarquera que le problème de la répartition peut se voir comme deux cas : 
 \begin{itemize}
 	\item Exécutions en parallèle (les éléments d'un même groupe).
-	\item Exécutions en série (éléments d'un scénario qui se suivent).
+	\item Exécutions en série (les éléments d'un scénario qui se suivent).
 \end{itemize}
 
 \section{Sémantique}\label{sec.semantique}
