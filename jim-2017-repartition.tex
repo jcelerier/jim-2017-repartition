@@ -11,6 +11,8 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{tikz}
+
+\newcommand\vocab[1]{\emph{#1}}
 \DeclareCaptionType{scenario}[Scénario]
 % Title.
 % ------
@@ -51,6 +53,10 @@ Vocabulaire. Prendre article SMC.
 \subsubsection{Répartition à l'exécution}
 %\subsubsection{Lien entre la répartition à l'édition et la répartition à l'exécution}
 
+- Problème des devices. Note : si on se permet d'envoyer des messages OSC quelconques (i.e. pas dans l'arbre), ça peut simplifier des choses. Aussi, permettre devices qui sont juste en mode envoi ? Il faut un autre proto que OSC ou Minuit...
+
+Aussi, refactoriser pour utiliser tout i-score en librairie
+
 \subsubsection{Horloges}
 Problème de l'horloge : 
 \begin{itemize}
@@ -59,6 +65,7 @@ Et NTP pas dispo partout (on n'a pas forcément les droits sur un téléphone po
 Horloge i-score se resynchronise déjà en cas de délai sur une machine.
 \item Si on utilise une horloge interne, problème de la synchronisation avec l'horloge système (pour le tick)
 \end{itemize}
+
 \url{http://queue.acm.org/detail.cfm?id=2745385}
 \url{http://radar.oreilly.com/2012/10/google-spanner-relational-database.html}
 \url{http://www.ntp.org/ntpfaq/NTP-s-sw-clocks-quality.htm}
@@ -73,7 +80,26 @@ scénario ? Il faut les recaler régulièrement.
 Possibilité : externe (NTP, etc) ou interne : \url{https://github.com/ethanlim/NetworkTimeProtocol}
 
 Recaler dès qu'on accumule du retard ?
+
+
+
 On peut introduire un recalage sur la master clock entre chaque tick.
+
+Ce qu'on fait : ping régulier vers chaque client (toutes les 100 millisecondes)
+
+Quand quelque chose doit se synchroniser, on dit à chaque machine à quel instant il est supposé arriver par rapport à son horloge système.
+
+Quand un client reçoit un ordre pour un timenode à t, il l'applique dès que t <= local(t) (modulo un tick?)
+
+
+
+Possibilité : synchronisation via démon externe (PTP, NTP...), mais pas toujours possible (on ne peut pas supposer que l'utilisateur a les droits pour changer l'horloge sur sa machine).
+
+Synchronous ethernet
+
+Ableton Link : synchro sur les ticks musicaux 
+
+Avoir une horloge propre à i-score ? Mais du coup maintenant il faut la synchroniser à l'horloge système. 
 
 \subsubsection{Problématique de la sécurité}
 
@@ -82,12 +108,51 @@ On peut introduire un recalage sur la master clock entre chaque tick.
 Ableton Link ? Netjack ?
 
 \section{Approche}
-\subsection{Notions introduites}
-\subsubsection{Groupe}
-\subsubsection{Client}
+Cette section détaille les choix de haut niveau réalisés.
+
+On souhaite modifier le moins possible le modèle pour les utilisateurs du logiciel, 
+en rajoutant les notions nécessaires et suffisantes pour offrir la finesse de répartition désirée.
+
+La section~\ref{sec.description} présente de manière détaillée les possibilités 
+de répartition que l'on offre.
+
+La section~\ref{sec.semantique} définit ces possibilités en utilisant les objets du modèle d'i-score.
+
+Enfin, la section~\ref{sec.evaluation} présente une évaluation des performances dans le cadre 
+d'une implémentation pratique.
+
+\subsection{Nouvelles notions}
+Nous nous trouvons en présence de plusieurs machines qui communiquent et partagent un document.
+L'ensemble constitué par les instances d'i-score et le document qu'elles partagent est appelé \vocab{session}.
+
+On désigne par \vocab{client} une instance d'i-score connectée à une << session >>.
+
+On désire s'affranchir des notions propres aux machines physiques et des problématiques de réseau (addresse IP, etc) lors de l'écriture 
+d'un scénario réparti. 
+
+Pour ce faire, on introduit la notion de \vocab{groupe}. 
+Un groupe est un ensemble de clients.
+
+Les compositeurs ne travaillent jamais directement avec un client, mais toujours au travers d'un groupe qui peut contenir zéro, un, ou plusieurs clients.
+
+De manière générale, quand plusieurs clients font partie d'un même groupe, cela signifie qu'ils vont réaliser les mêmes tâches, de manière synchrone ou asynchrone.
+
+L'intérêt d'un groupe est la tolérance aux pannes, déconnections, reconnections, et changements d'installation. 
+Par exemple, si une machine tombe en panne, on peut la remplacer par une autre simplement en l'assignant au même groupe que la machine en panne 
+sans avoir besoin de mettre à jour le scénario.
 
 \subsection{Topologie}
 Maître-esclave pour l'édition.
+
+Pour des raisons de simplicité, la première mise en \oe uvre se fait via une toplogie réseau en étoile : un maître gère 
+le déroulement général de l'exécution. 
+Les différents clients communiquent au travers de ce maître, avec les avantages et inconvénients que cela implique : 
+\begin{itemize}
+	\item Facilité d'analyse lors du développement : on peut enregistrer tous les messages échangés avec leurs estampilles.
+	\item Intolérance aux pannes : si le maître faillit, aucune récupération n'est possible.
+\end{itemize}
+
+On détaille dans les sections suivantes les cas ou des topologies différentes peuvent montrer un intérêt.
 
 Pour l'exécution : dans certains cas deux machines peuvent échanger directement.
 Il faut décrire ces cas.
@@ -105,6 +170,7 @@ mais c'est prohibitoire pour les utilisateurs.
 
 Différentes possibilités de répartition sont disponibles selon les types de processus.
 
+Détailler les implications des choix par rapport au théorême CAP et PACELT.
 \subsection{Modèle}
 i-score se base sur une approche orientée document.
 
@@ -114,12 +180,12 @@ On choisit de répartir nos objets autour d'un même document partagé par toute
 Cela ne pose pas de problème de mémoire, même sur de l'embarqué : 
 les scénarios i-score sont très compacts (en général quelques dizaines de kilo-octets).
 
-\subsubsection{Répartition de l'édition du modèle}
+\subsection{Répartition de l'édition}
 - Partage de file undo - redo. Transformations opérationnelles. %CITE
 
 - Autres approches : partage du modèle lui-même.
 
-\section{Description de l'exécution}
+\section{Description de l'exécution}\label{sec.description}
 \subsection{Processus de contenu}
 Automation, mapping, JS, audio...
 
@@ -184,7 +250,7 @@ Dans le cas ou on a un partage de certaines lignes temporelles par certaines mac
 
 	\item On peut supposer que des sous-parties d'un scénario pourraient être exécutées entièrement par une machine ou groupe.
 \end{itemize}
-Ordonnancement : par timestamps.
+Ordonnancement : par estampilles.
 
 \begin{figure}[h]
     \centering
@@ -210,7 +276,9 @@ Le scénario~\ref{scenar.trigger-1} peut se résoudre de plusieurs manières.
 \end{itemize}
 
 \subsubsection{Consensus}
-Paxos, Raft sont des algorithmes permettant de garantir un consensus.%CITE
+Paxos, Raft sont des algorithmes permettant de garantir un consensus.%CITE 
+% https://github.com/apache/kudu
+
 
 S'il y a synchronisation, on sépare la synchronisation du consensus, de la synchronisation de l'exécution qui suit la résolution de ce consensus : 
 \begin{enumerate}
@@ -225,6 +293,7 @@ On peut rajouter un niveau d'indirection. Le plus général : chaque objet peut 
 Si un client est dans deux groupes, comment gérer le conflit ? bof.
 
 \subsection{Introduction de primitives réparties dans i-score}
+TODO voir politiques d'exécution de réseaux de Petri dans thèse AA
 
 \subsubsection{Répartition des contenus dans le cas non-interactif}
 \begin{figure}[h]
@@ -254,13 +323,32 @@ On sépare donc les objets structurants, des objets possédant des données (par
     \label{scenar.general}
 \end{figure}
 
-Un problème de synchronisation
+\subsection{Récapitulatif}
+On choisit pour la répartition un modèle de document partagé : toutes les machines voient le même scénario.
 
-- On souhaite modifier le moins possible le modèle pour les utilisateurs
+On introduit une notion de client (une machine physique) et de groupe.
+Un groupe peut contenir plusieurs clients, et un client peut être présent dans plusieurs groupes.
 
-- Notion de groupe. Intérêt d'un groupe : s'abstrait des clients qui peuvent se déconnecter / reconnecter.
+Différents objets du modèle d'i-score peuvent être assignés à un groupe : 
 
-- Problème des devices. Note : si on se permet d'envoyer des messages OSC quelconques (i.e. pas dans l'arbre), ça peut simplifier des choses. Aussi, permettre devices qui sont juste en mode envoi ? Il faut un autre proto que OSC ou Minuit...
+\begin{itemize}
+	\item Les processus
+	\item Les expressions
+	\item Les contraintes temporelles
+\end{itemize}
+
+Donner un groupe à une contrainte temporelle propage ce groupe à tous ses processus enfants.
+
+Pour le cas du processus scénario, la répartition peut avoir lieu de manière synchrone ou asynchrone, 
+avec ou sans partage d'informations entre clients.
+
+
+\section{Sémantique}\label{sec.semantique}
+On décrit ici la sémantique des différentes méthodes de synchronisation vues précédemment.
+
+On fait le choix de décrire ce modèle via la sémantique existante de i-score ; cela peut être ramené à des réseaux de Petri assez facilement.
+
+
 
 - implémentation : on rajoute des délais dans les expressions.
 
@@ -275,13 +363,7 @@ Il faut définir sur quelle machine l'expression est validée.
 
 - Cas de la borne max : trigger, bof
 
-Groupes pour triggers : problème du consensus. Voir notamment Paxos, Raft... 
-% https://github.com/apache/kudu
-
 Pour l'instant : group leader ? ou bien tous se communiquent l'information et prennent la décision en fonction de cette information ?
-
-- Latence : prendre moyenne et écart-type sur les dix dernières valeurs ? Ou juste dernière valeur ?
-En LAN gigabit on est en général < à une milliseconde.
 
 - Pour l'édition temps-réel, on doit permettre d'appliquer des "filtres" (par exemple qui vont rajouter une sur-expression, etc)
 \subsection{Méchanismes de synchronisation}
@@ -335,7 +417,7 @@ Partagée & 3 & 4\\
 \end{tabular}
 \end{figure}
 \begin{itemize}
-    \item Décision locale : Pour un trigger, soit tout le scénario est local (donc même contrainte avant / après et certains ordis n'exécutent pas du tout ce scénario), soit le premier à avoir un résultat avertit les suivants.
+    \item Décision locale : Pour un trigger, soit tout le scénario est local (donc même contrainte avant / après et certains ordis n'exécutent pas du tout ce scénario), soit le premier à avoir un résultat avertit les suivants. -> Le résultat des autres machines n'influence pas l'exécution sur une machine donnée.
     \item Décision partagée : tous les éléments d'un groupe doivent prendre une décision avec une politique donnée : soit tous doivent vérifier la condition, soit un seul.
     \item Décision synchrone : On veut que les éléments s'arrêtent et démarrent le plus proche possible d'une même date en wall clock.
     \item Décision asynchrone : On veut que les éléments s'arrêtent et démarrent le plus vite possible dès qu'une information est disponible.
@@ -347,22 +429,8 @@ Partagée & 3 & 4\\
 \item Décision partagée synchrone : toutes les machines attendent qu'un unique choix soit effectué pour le résultat de l'expression
 \item Décision partagée asynchrone
 \end{enumerate}
-
-Possibilité : synchronisation via démon externe (PTP, NTP...), mais pas toujours possible (on ne peut pas supposer que l'utilisateur a les droits pour changer l'horloge sur sa machine).
-
-Synchronous ethernet
-
-Ableton Link : synchro sur les ticks musicaux 
-
-Avoir une horloge propre à i-score ? Mais du coup maintenant il faut la synchroniser à l'horloge système. 
-
-Ce qu'on fait : ping régulier vers chaque client (toutes les 100 millisecondes)
-
-Quand quelque chose doit se synchroniser, on dit à chaque machine à quel instant il est supposé arriver par rapport à son horloge système.
-
 Extension via système de composants
 
-Quand un client reçoit un ordre pour un timenode à t, il l'applique dès que t <= local(t) (modulo un tick?)
 
 On ne synchronise qu'à chaque point d'entrée / de sortie d'un groupe de contraintes / time nodes
 \subsection{Extension des possibilités d'écriture}
@@ -370,8 +438,12 @@ On ne synchronise qu'à chaque point d'entrée / de sortie d'un groupe de contra
 
 * Pattern matching sur addresses 
 
-\section{Performance}
+\section{Évaluation}\label{sec.evaluation}
 - Comparaison de l'algorithme "simple" et de l'algorithme avec retard
+
+
+- Latence : prendre moyenne et écart-type sur les dix dernières valeurs ? Ou juste dernière valeur ?
+En LAN gigabit on est en général < à une milliseconde.
 
 \section{Citations}
 
