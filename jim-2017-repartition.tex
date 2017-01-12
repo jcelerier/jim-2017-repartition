@@ -8,18 +8,22 @@
 \usepackage{caption}
 \usepackage{booktabs}
 \usepackage{microtype}
-%\usepackage{pxfonts}
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{tikz}
 \usepackage{xspace}
-\setmainfont{Tribun ADF Std}
 \usepackage{array}
+\usepackage{subcaption}
+\usepackage[backend=biber]{biblatex}
+\addbibresource{biblio.bib}
+
+\setmainfont{Tribun ADF Std}
 
 \newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}   %% centered
 \newcolumntype{R}[1]{>{\raggedright\arraybackslash}m{#1}}  %% right aligned
 \newcolumntype{L}[1]{>{\raggedleft\arraybackslash}m{#1}}  %% right aligned
 
+\newcommand\timenode{nœud temporel\xspace}
 \newcommand\trigger{point d'interaction\xspace}
 \newcommand\triggers{points d'interaction\xspace}
 \newcommand\vocab[1]{\textbf{#1}}
@@ -60,37 +64,54 @@ Pour conclure, les performances du système développé seront présentées.
 \section{Études de cas}
 
 \subsection{Projet Quarrè}
-- Cas des applis de téléphone : un objet qui s'exécute sur plusieurs machines en parallèle dont on veut aggréger les résultats
+Quarrè est une installation en son spatialisé réalisée par Pierre Cochard au SCRIME, qui utilise Max/MSP, i-score, et une application mobile développée pour l'occasion. 
+Elle implique plusieurs participants possédant chacun un téléphone.
 
+Une trame principale d'environ trente minutes se déroule.
+Durant cette trame, à différents moments, des participants vont pouvoir interagir via l'application mobile, qui les avertis par un compte à rebours. 
+Ils disposent ensuite d'une durée déterminée pour agir : changer un paramètre d'un effet, déclencher des sons, spatialiser un objet sonore\dots
+Les actions possibles varient en fonction du nombre de participants, pouvant aller de un à cinq.
+
+%- Cas des applis de téléphone : un objet qui s'exécute sur plusieurs machines en parallèle (dont on veut aggréger les résultats)
 
 \begin{figure}[h]
     \centering
     \includegraphics[scale=0.2]{images/quarre.jpg}
-    \caption{Plusieurs groupes $A,B,C$ avec plusieurs clients dans chaque groupe}
+    \caption{Quarrè sans participants. Pierre Cochard, 2016.}
     \label{img.groupes}
 \end{figure}
 
-\subsection{Installation en son réparti}
-Musée de Jien
+\subsection{Support des périphériques embarqués}
+Actuellement, une des manières principales d'utiliser le logiciel i-score est de lui faire faire du contrôle par réseau. 
 
-\subsection{Problématiques générales}
-\subsubsection{Latence}
-- Problème de la latence entre i-score et raspberry, + utilisation de bande passante.
+Néanmoins, sur des périphériques embarqués, cela a un coût : 
+\begin{itemize}
+    \item Encombrement de la bande passante : certains périphériques ne sont pas en Gigabit Ethernet; envoyer des quantités importantes de messages OSC sur des intervalles de quelques millisecondes va entraîner des pertes de paquets, des retards et l'augmentation du temps de latence.
+    \item Gigue\footnote{De l'anglais \textit{jitter}} sur les messages envoyés qui peut entraîner des effets indésirables comme des tremblements si par exemple on fait se déplacer des objets graphiques par réseau.
+    \item Consommation de ressources pour le décodage des messages réseaux.
+\end{itemize}
 
-\subsubsection{Spare et backups}
+De plus, actuellement, il est nécessaire de copier les fichiers de sauvegarde sur le périphérique à chaque modification que l'on veut tester, ce qui est peu ergonomique. 
+On essaye donc par la même occasion d'offrir un système qui permette de partager automatiquement un scénario i-score entre deux machines.
+
+\subsection{Lecture de médias synchronisée}
+On désire offrir des possibilités de lecture vidéo permettant à 
+des clips audio ou vidéo de démarrer au même instant sur plusieurs machines, 
+puis de rester synchronisés durant la lecture.
+
+\subsection{Redondance}
+Le matériel n'étant pas infaillible, la question de la résilience se pose~: comment mitiger une panne de l'ordinateur principal pendant une représentation artistique ?
+
+Une des possibilités est d'offrir un système de redondance : si une machine tombe en panne, une autre prend le relais le plus vite possible.
+La machine prenant le relai doit donc avoir été préalablement synchronisée avec la machine étant tombé en panne, pour garantir le moins de perturbations possibles.
  
-\subsubsection{Faciliter l'écriture de programmes qui s'exécutent sur des machines embarquées}
-    
-
-- Donner la possibilité de faire un dialogue (boucle avec un coup un \trigger qui vient de A, un coup un \trigger qui vient de B, etc)
-
-- Approche alternative avec application mobile.
+%- Donner la possibilité de faire un dialogue (boucle avec un coup un \trigger qui vient de A, un coup un \trigger qui vient de B, etc)
+%- Approche alternative avec application mobile.
 
 \subsection{État de l'art}
 \subsubsection{Rappel du modèle d'i-score}
+\cite{celerier2015ossia}
 Vocabulaire. Prendre article SMC.
-
-Ici les processus de donnés sont représentés par une boite barrée en diagonale (cas courant d'une courbe montante).
 
 Mettre accent sur hiérarchie
 %\subsubsection{Répartition à l'édition}
@@ -232,7 +253,7 @@ i-score se base sur une approche orientée document.
 On choisit de répartir nos objets autour d'un même document partagé par toutes les instances du réseau, 
 à la manière des logiciels d'édition tels que Google Docs. %CITE
 
-Cela ne pose pas de problème de mémoire, même sur de l'embarqué tel que Raspberry Pi : l'empreinte mémoire d'un scénario est minime en comparaison de l'occupation des bibliothèques utilisées (quelques dizaines de kilo-octets contre quelques méga-octets).
+Cela ne pose pas de problème de mémoire, même sur de l'embarqué tel que Raspberry Pi : l'empreinte mémoire d'un scénario est minime en comparaison de l'occupation des bibliothèques utilisées (quelques dizaines de kilo-octets contre environ 50 méga-octets).
 
 \subsection{Répartition de l'édition}
 - Partage de file undo - redo. Transformations opérationnelles. %CITE
@@ -254,6 +275,7 @@ On entend par processus de contenu, tous les processus produisant des données, 
 Le processus s'exécute tel quel pour tous les clients auquel il est assigné, 
 et ne s'exécute pas pour les autres.
 
+Ici les processus de contenu sont représentés par une boite barrée en diagonale, qui représente le cas courant d'une automation montante.
 % TODO pour devices, faire en sorte que les clients ne se connectent que à ceux qui sont en local ? Ou même mode "non connecté" (mais impossible de recevoir comme ça). Ou bien avoir une "map" d'addresse ip / port pour chaque paire client <-> device.
 
 \subsubsection{Comportements de groupes}
@@ -369,7 +391,7 @@ Trois niveaux de partage :
 
 \subsubsection{Cas non-interactif}
 % Cas principalement développé dans rapport de master
-On peut soit utiliser les méthodes de synchronisation décrites précédemment, mais une possibilité s'ajoute : 
+On peut utiliser les méthodes de synchronisation décrites précédemment, mais une possibilité s'ajoute : 
 
 Comme on connait les dates effectives auxquelles les objets sont sensés s'exécuter, on peut les fixer à l'avance sur chaque machine. 
 Un parcours de graphe permet d'obtenir une estimation des dates minimales auxquelles il est possible de fixer des dates d'exécutions des éléments suivant un point d'interaction donné.
@@ -379,11 +401,11 @@ Le même mécanisme a été utilisé dans~\cite{celerier2016rethinking} pour sp�
 \begin{itemize}
 \item Avantage : s'il y a une déconnexion, l'exécution va continuer à fonctionner au moins jusqu'au prochain \trigger.
 \item Inconvénient : il suffit d'un peu de délai pour que le début de B survienne avant la fin de A. 
-Il est particulièrement important dans ce cas de garder les horloges synchronisées.
+Il est donc particulièrement important dans ce cas de garder les horloges des machines synchronisées.
 \end{itemize}
 
 On notera que modifier la vitesse d'exécution des éléments en temps réel implique de mettre à jour les estimations de dates sur toutes les autres machines. 
-En autorisant cela, on pert donc une certaine tolérance au partitionnement.
+En autorisant cela, on perd donc une certaine tolérance au partitionnement.
 
 \begin{figure}[h]
 	\centering
@@ -486,7 +508,7 @@ Pour l'instant : group leader ? ou bien tous se communiquent l'information et pr
 
 
 \subsubsection{Cas particuliers}
-- Cas ou groupe est vide : afficher un warning à l'auteurcar ce n'est peut-être pas désirable et significatif d'un problème matériel.
+- Cas ou groupe est vide : afficher un warning à l'auteur car ce n'est peut-être pas désirable et significatif d'un problème matériel.
 
 
 - Cas de groupes avec un seul participant.
@@ -494,15 +516,15 @@ Pour l'instant : group leader ? ou bien tous se communiquent l'information et pr
 Si par exemple on dispose de deux clients exécutant des objets en série,
 la synchronisation peut être plus simple : on n'a pas besoin de l'étape de consensus.
 \subsection{Processus boucle}
-La notion de boucle a été introduite dans~\ref{celerier2016graphical}.
+La notion de boucle a été introduite dans~\cite{celerier2016graphical}.
 
 \subsection{Récapitulatif}
-On choisit pour la répartition un modèle de document partagé : toutes les machines voient le même scénario.
+On choisit pour la répartition un modèle de document partagé : toutes les machines voient le même document, mais peuvent chacune en interpréter des sous-parties différemment à la discrétion du compositeur.
 
-On introduit une notion de client (une machine physique) et de groupe.
+On introduit une notion de client (potentiellement une machine physique) et de groupe.
 Un groupe peut contenir plusieurs clients, et un client peut être présent dans plusieurs groupes.
 
-Différents objets du modèle d'i-score peuvent être assignés à un groupe : 
+Différents objets du modèle d'i-score peuvent être assignés à un ou plusieurs groupes : 
 
 \begin{itemize}
 	\item Les processus
@@ -524,13 +546,14 @@ On remarquera que le problème de la répartition peut se voir comme deux cas :
 \section{Sémantique}\label{sec.semantique}
 On décrit ici la sémantique des différentes méthodes de synchronisation vues précédemment.
 
-On fait le choix de décrire ce modèle via la sémantique existante de i-score ; cela peut être ramené à des réseaux de Petri assez facilement.
+On fait le choix de décrire ce modèle via la sémantique existante de i-score ; en effet, on dispose déjà de primitives de synchronisation et d'envoi de message.
 
 
 \subsection{Introduction de primitives réparties dans i-score}
 TODO voir politiques d'exécution de réseaux de Petri dans thèse AA
 
-\subsubsection{Répartition des contenus dans le cas non-interactif}
+\subsubsection{Modélisation dans le cas non-interactif}
+Le premier cas étudié est celui du déplacement : deux contraintes $C_1$, $C_2$ se suivent, on veut que la première s'exécute sur les clients d'un groupe $A$, et que la seconde s'exécute sur les clients d'un groupe $B$.
 \begin{figure}[h]
     \centering
     \begin{tikzpicture}
@@ -540,7 +563,47 @@ TODO voir politiques d'exécution de réseaux de Petri dans thèse AA
     \label{scenar.simple}
 \end{figure}
 
+Dans le cas présenté par le scénario~\ref{scenar.simple}, on applique les transformations suivantes~: 
+\begin{enumerate}
+    \item On crée une bifurcation au niveau du premier \timenode, avant $C_1$.
+    \item On introduit une contrainte temporelle $C_{1\rightarrow2}$.
+    \item On déplace $C_2$ à la suite de cette contrainte temporelle.
+    \item Si on se trouve dans le cas asynchrone~: on crée un message $M_1$ qui ira déclencher $T_1$ et on rend $C_{1\rightarrow2}$ souple.
+    Dès qu'une machine de $A$ arrivera à $M_1$, le message sera envoyé.
+    \item Si on se trouve dans le cas précalculé~: la durée calculée sera celle de $C_{1\rightarrow2}$. Les machines du groupe $A$ et $B$ peuvent être déconnectées après le début de la lecture et continueront à fonctionner comme prévu.
+\end{enumerate}
+Quand il n'y a pas de point d'interaction, le cas synchrone n'offre pas d'avantages par rapport au cas précalculé.
+
+\begin{figure}[h]
+\centering
+\begin{subfigure}{.5\linewidth}
+\begin{tikzpicture}
+\input{scenarios/deplacement-simple.tex}
+\end{tikzpicture}
+\caption{Cas asynchrone}
+%\captionof{scenario}{Deux contraintes temporelles se suivent}
+\end{subfigure}
+
+\begin{subfigure}{.5\linewidth}
+    \begin{tikzpicture}
+    \input{scenarios/deplacement-precalcule.tex}
+    \end{tikzpicture}
+    \caption{Cas précalculé}
+%    \captionof{scenario}{Deux contraintes temporelles se suivent}
+\end{subfigure}
+\caption{Méthode pour l'exécution de deux contraintes en série sur deux machines séparées}
+\label{scenar.deplacement}
+\end{figure}
+
 - implémentation : on rajoute des délais dans les expressions.
+
+
+Cas à traiter : 
+- Trigger
+- Duplication
+- Déplacement avec plusieurs scénarios (consensus ?) -> introduire un device virtuel qui règle le consensus
+
+\subsubsection{Modélisation dans le cas interactif}
 
 \subsection{Méchanismes de synchronisation}
 - Cas possibles : 
@@ -558,12 +621,7 @@ TODO voir politiques d'exécution de réseaux de Petri dans thèse AA
 - Latence : prendre moyenne et écart-type sur les dix dernières valeurs ? Ou juste dernière valeur ?
 En LAN gigabit on est en général < à une milliseconde.
 
-\section{Citations}
 
-Toutes les références bibliographiques des citations devront être listées dans la section "\textsc{References}", numérotées et en ordre alphabétique. Toutes les références  listées devront être citées dans le texte. Quand  vous vous référez au document dans le texte, précisez son numéro \cite{Author:00}.
-
-%\begin{thebibliography}{2}
-
-%\end{thebibliography}
+\printbibliography 
 
 \end{document}
