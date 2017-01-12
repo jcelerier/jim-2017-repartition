@@ -40,38 +40,52 @@
     avant tout avec d'autres musiciens, et plus récemment avec des algorithmes ou logiciels 
     disposant d'un certain degré d'autonomie et de liberté.
     
-    La notation musicale occidentale résout le problème du partage d'information entre musiciens 
-    en séparant une partition en portées; la plupart des logiciels musicaux vont interpréter cette 
-    portée sur une seule machine, en gardant la possibilité de pistes avec des réglages indépendants. 
+    La notation musicale occidentale résout le problème du partage et de la séparation d'information entre musiciens 
+    en divisant une partition en portées; la plupart des logiciels musicaux vont interpréter ces portées sur une seule machine, en gardant la possibilité de pistes avec des réglages indépendants. 
     
-    Ce document présente d'une part une généralisation de cette notion de partage aux scénarios interactifs, 
-    et d'autre part une implémentation pratique dans le logiciel i-score, mettant en valeur 
-    les possibilités d'écriture augmentées qu'offre une exécution répartie à un compositeur.
+    Ce travail consiste en une généralisation de cette notion de partage aux scénarios interactifs, en permettant une exécution synchrone ou asynchrone de plusieurs parties d'un scénario sur plusieurs machines.
+    Une implémentation est offerte dans le logiciel i-score, avec pour objectif de mettre en valeur 
+    les nouvelles possibilités d'écriture qu'offre une exécution répartie à un compositeur.
 \end{abstract}
 \section{Problématique}
 On cherche à définir une sémantique permettant de décrire l'exécution d'une partition interactive sur plusieurs machines, en prenant en compte les exécutions parallèles, c'est-à-dire que deux machines jouent la même chose, de manière synchronisée ou non, ainsi que les exécutions série : une machine joue puis une autre machine joue la suite.
 
 On parle ici de «jeu» à un niveau abstrait~: on s'intéresse au contrôle de tous types de paramètres et non pas uniquement les paramètres musicaux.
 
-On présentera d'abord plusieurs applications et problématiques pratiques rencontrées par des artistes et auteurs, qui ont motivé ce travail.
-Puis, les possibilités de répartition étudiées seront présentées dans le détail, en analysant l'impact que peuvent avoir les problèmes connus dans le domaine de l'informatique répartie, sur l'écriture de telles partitions. Pour conclure, les performances du système développé seront présentées.
+On présentera d'abord plusieurs applications et besoins rencontrées par des artistes et auteurs, qui ont motivé ce travail.
+Puis, les possibilités de répartition étudiées seront présentées dans le détail, en analysant l'impact que peuvent avoir les problèmes connus dans le domaine de l'informatique répartie, sur l'écriture de telles partitions. 
+Pour conclure, les performances du système développé seront présentées.
 
+%TODO notation graphique pour groupes, synchrone, asynchrone, etc... ?
 \section{Études de cas}
--> installation en son réparti ?
 
+\subsection{Projet Quarrè}
+- Cas des applis de téléphone : un objet qui s'exécute sur plusieurs machines en parallèle dont on veut aggréger les résultats
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[scale=0.2]{images/quarre.jpg}
+    \caption{Plusieurs groupes $A,B,C$ avec plusieurs clients dans chaque groupe}
+    \label{img.groupes}
+\end{figure}
+
+\subsection{Installation en son réparti}
+Musée de Jien
+
+\subsection{Problématiques générales}
+\subsubsection{Latence}
 - Problème de la latence entre i-score et raspberry, + utilisation de bande passante.
 
-- Cas des applis de téléphone : un objet qui s'exécute sur plusieurs machines en parallèle dont on veut aggréger les résultats
+\subsubsection{Spare et backups}
+ 
+\subsubsection{Faciliter l'écriture de programmes qui s'exécutent sur des machines embarquées}
+    
 
 - Donner la possibilité de faire un dialogue (boucle avec un coup un \trigger qui vient de A, un coup un \trigger qui vient de B, etc)
 
 - Approche alternative avec application mobile.
 
-- Faciliter l'écriture de programmes qui s'exécutent sur des machines embarquées
-
-- Lister les cas. D'abord non interactif (partage uniquement des processus), puis interactif.
-
-On veut : résistance aux "normal" failures, pas Byzantine failures.
 \subsection{État de l'art}
 \subsubsection{Rappel du modèle d'i-score}
 Vocabulaire. Prendre article SMC.
@@ -83,9 +97,6 @@ Mettre accent sur hiérarchie
 \subsubsection{Répartition à l'exécution}
 %\subsubsection{Lien entre la répartition à l'édition et la répartition à l'exécution}
 
-- Problème des devices. Note : si on se permet d'envoyer des messages OSC quelconques (i.e. pas dans l'arbre), ça peut simplifier des choses. Aussi, permettre devices qui sont juste en mode envoi ? Il faut un autre proto que OSC ou Minuit...
-
-Aussi, refactoriser pour utiliser tout i-score en librairie
 
 \subsubsection{Horloges}
 Problème de l'horloge : 
@@ -104,7 +115,7 @@ Faire la relation entre notre système et le problème CAP : \url{https://en.wik
 
 Horloges logiques : équivalent à envoyer une timestamp à chaque tick (on arrive donc à un méchanisme de vector clock approximatif). 
 
-Synchro d'horloges de deux machines dont une qui ralenti, si elles exécutent le même 
+Synchro d'horloges de deux clionts dont une qui ralenti, si elles exécutent le même 
 scénario ? Il faut les recaler régulièrement. 
 
 Possibilité : externe (NTP, etc) ou interne : \url{https://github.com/ethanlim/NetworkTimeProtocol}
@@ -117,7 +128,7 @@ On peut introduire un recalage sur la master clock entre chaque tick.
 
 Ce qu'on fait : ping régulier vers chaque client (toutes les 100 millisecondes)
 
-Quand quelque chose doit se synchroniser, on dit à chaque machine à quel instant il est supposé arriver par rapport à son horloge système.
+Quand quelque chose doit se synchroniser, on dit à chaque client à quel instant il est supposé arriver par rapport à son horloge système.
 
 Quand un client reçoit un ordre pour un timenode à t, il l'applique dès que t <= local(t) (modulo un tick?)
 
@@ -132,6 +143,7 @@ Ableton Link : synchro sur les ticks musicaux
 Avoir une horloge propre à i-score ? Mais du coup maintenant il faut la synchroniser à l'horloge système. 
 
 \subsubsection{Problématique de la sécurité}
+On veut : résistance aux "normal" failures, pas Byzantine failures.
 
 \subsubsection{Synchronisation de médias}
 - pas pour l'instant... doivent être au même endroit sur la même machine.
@@ -146,10 +158,26 @@ en rajoutant les notions nécessaires et suffisantes pour offrir la finesse de r
 La section~\ref{sec.description} présente de manière détaillée les possibilités 
 de répartition que l'on offre, en prenant example sur des cas simples.
 
-La section~\ref{sec.semantique} définit ces possibilités en utilisant les objets du modèle d'i-score.
+La section~\ref{sec.semantique} définit ces possibilités en utilisant les objets du modèle d'i-score. 
+On notera que cette méthode serait prohibitoire à réaliser manuellement~: c'est un modèle pour réaliser l'implémentation, qui se fait automatiquement à partir de la spécification que donne le compositeur via les outils présentés en section~\ref{sec.description}. 
+On prendra donc garde à ne pas confondre la forme de répartition qui existe déjà de fait dans le logiciel, l'objectif premier d'i-score étant de communiquer avec d'autres logiciels, de la répartition entre instances d'i-score partageant un même document.
 
 Enfin, la section~\ref{sec.evaluation} présente une évaluation des performances dans le cadre 
 d'une implémentation pratique.
+
+-------------------------------------------
+Première approche basées sur réseau de Pe-tri.
+
+Puis migration du modèle d'i-score maintenant autonome.
+
+
+- Problème des devices. Note : si on se permet d'envoyer des messages OSC quelconques (i.e. pas dans l'arbre), ça peut simplifier des choses. Aussi, permettre devices qui sont juste en mode envoi ? Il faut un autre proto que OSC ou Minuit...
+
+Aussi, refactoriser pour utiliser tout i-score en librairie
+
+Différentes possibilités de répartition sont disponibles selon les types de processus.
+
+Détailler les implications des choix par rapport au théorême CAP et PACELT.
 
 \subsection{Nouvelles notions}
 Nous nous trouvons en présence de plusieurs machines qui communiquent et partagent un document.
@@ -163,7 +191,7 @@ d'un scénario réparti.
 Pour ce faire, on introduit la notion de \vocab{groupe}. 
 Un groupe est un ensemble de clients.
 
-Les compositeurs ne travaillent manipulent jamais directement la notion de client, uniquement celle d'un groupe qui peut contenir zéro, un, ou plusieurs clients.
+Les compositeurs ne manipulent jamais directement la notion de client, uniquement celle d'un groupe qui peut contenir zéro, un, ou plusieurs clients.
 
 De manière générale, quand plusieurs clients font partie d'un même groupe, cela signifie qu'ils vont réaliser les mêmes tâches, de manière synchrone ou asynchrone.
 
@@ -171,10 +199,11 @@ L'intérêt d'un groupe est la tolérance aux pannes, déconnections, reconnecti
 Par exemple, si une machine tombe en panne, on peut la remplacer par une autre simplement en l'assignant au même groupe que la machine en panne 
 sans avoir besoin de mettre à jour le scénario.
 
+
 \begin{figure}[h]
 	\centering
 	\includegraphics[scale=0.2]{images/groupes.eps}
-	\caption{Plusieurs groupes avec plusieurs machines dans chaque groupe}
+	\caption{Plusieurs groupes $A,B,C$ avec plusieurs clients dans chaque groupe}
 	\label{img.groupes}
 \end{figure}
 
@@ -192,42 +221,37 @@ Les différents clients communiquent au travers de ce maître, avec les avantage
 
 On détaille dans les sections suivantes les cas ou des topologies différentes peuvent montrer un intérêt.
 
-Pour l'exécution : dans certains cas deux machines peuvent échanger directement.
+Pour l'exécution : dans certains cas deux clients peuvent échanger directement.
 Il faut décrire ces cas.
 
-Si groupes avec plusieurs machines : "group leader" ? responsable de la communication ? avoir un "plus court chemin" permanent ?
+Si groupes avec plusieurs clients : "group leader" ? responsable de la communication ? avoir un "plus court chemin" permanent ?
 
-\subsection{Fondements}
-Première approche basées sur réseau de Petri.
-
-Puis migration du modèle d'i-score maintenant autonome.
-
-Il est possible d'implément ce méchanisme de répartition purement avec les primitives dont on dispose dans i-score, 
-mais c'est prohibitoire pour les utilisateurs.
-
-Différentes possibilités de répartition sont disponibles selon les types de processus.
-
-Détailler les implications des choix par rapport au théorême CAP et PACELT.
 \subsection{Modèle}
 i-score se base sur une approche orientée document.
 
 On choisit de répartir nos objets autour d'un même document partagé par toutes les instances du réseau, 
 à la manière des logiciels d'édition tels que Google Docs. %CITE
 
-Cela ne pose pas de problème de mémoire, même sur de l'embarqué : 
-les scénarios i-score sont très compacts (en général quelques dizaines de kilo-octets).
+Cela ne pose pas de problème de mémoire, même sur de l'embarqué tel que Raspberry Pi : l'empreinte mémoire d'un scénario est minime en comparaison de l'occupation des bibliothèques utilisées (quelques dizaines de kilo-octets contre quelques méga-octets).
 
 \subsection{Répartition de l'édition}
 - Partage de file undo - redo. Transformations opérationnelles. %CITE
 
 - Autres approches : partage du modèle lui-même.
 
+- Pour l'édition temps-réel, on doit permettre d'appliquer des "filtres" (par exemple qui vont rajouter une sur-expression, etc)
+
 \section{Description de l'exécution}\label{sec.description}
-On sépare les objets offrant une structure temporelle, des objets possédant des données (par exemple, une automation).
+On sépare les objets offrant une structure temporelle, des objets possédant des données et commandes envoyées à d'autres logiciels (par exemple, une automation).
+
+Des groupes et des méthodes de synchronisation sont assignées à ces objets par le compositeur; en pratique, ces informations sont enregistrées comme une liste de méta-données associées aux objets.
+Il est possible d'assigner plusieurs groupes à un objet; cela se comporte comme un groupe constitué de la somme des clients de chaque groupe était assigné.
+
+% *** est-ce que ce n'est pas plus intéressant d'essayer de spécifier le cas ou on a plusieurs groupes sur plusieurs objets ? 
 \subsection{Processus de contenu}
 On entend par processus de contenu, tous les processus produisant des données, sans se soucier de la structuration temporelle. En voici une liste non exhaustive : automation, mapping, code javascript, piano roll MIDI, audio\dots
 
-Le processus s'exécute tel quel pour toutes les machines auquel il est assigné, 
+Le processus s'exécute tel quel pour tous les clients auquel il est assigné, 
 et ne s'exécute pas pour les autres.
 
 % TODO pour devices, faire en sorte que les clients ne se connectent que à ceux qui sont en local ? Ou même mode "non connecté" (mais impossible de recevoir comme ça). Ou bien avoir une "map" d'addresse ip / port pour chaque paire client <-> device.
@@ -237,13 +261,18 @@ et ne s'exécute pas pour les autres.
 Deux manières : offrir un processus de mapping spécialisé qui permet de définir les relations qu'on veut dans un groupe ("first", "all", "mean", "sum", etc...)
 
 Ou bien faire cette transformation à plus bas niveau (pour les devices) : les sorties sont constantes mais on peut appliquer des transformations aux entrées.
+Par exemple, si on possède un device spécial "network" avec l'arbre local de chaque "groupe", qui offre une couche d'abstraction au-dessus des méchanismes de consensus, on peut avoir des possibilités plus riches, telles que : l'expression $e_2$ est vraie si l'expression $e_1$ était vraie pour le groupe $B$ et fausse pour le groupe $A$.
+
+Pour permettre plus de possibilités, on introduit la possibilité de réaliser des expressions qui réalisent un pattern-matching : 
+\lstinline|network:/*/trigger == true|.
 
 \subsection{Processus Scénario}
 Le scénario est le processus central d'i-score : il met en relation les différents éléments temporels.
 
 Plusieurs manières de répartir l'exécution d'un scénario, offrant différentes possibilités d'écriture, sont détaillées ci-dessous. On sépare le cas général permettant l'interactivité dans un scénario (le scénario continue après qu'un évènement externe $e$ se soit déclenché, visible par exemple en scénario~\ref{scenar.general}) du cas plus simple ou les dates sont fixées, visible en scénario~\ref{scenar.non-interactif}.
 
-On travaillera dans les examples suivants avec trois groupes $A,B,C$ disposant chacun d'un nombre inconnu de clients.
+On travaillera dans les examples suivants avec trois groupes $A,B,C$ disposant chacun d'un nombre inconnu de clients. 
+On pourra supposer que les contraintes temporelles portent chacune des processus de contenus, qui ne sont pas représentés ici afin de garder les figures simples.
 
 \subsubsection{Modes de synchronisation}
 On identifie trois niveaux de synchronisation, qui peuvent chacuns avoir leur utilité dans un cas différent : 
@@ -271,10 +300,10 @@ Les mécanismes de consensus possibles sont détaillés plus en détail par la s
 Trois niveaux de partage : 
 
 \begin{itemize}
-    \item Partage complet : il n'y a qu'une seule ligne temporelle partagée pour toutes les machines. 
-    Les annotations de machines indiquent l'emplacement d'exécution. 
-    Les groupes servent à indiquer ou non l'exécution d'un processus sur une machine et le groupe devant parvenir à un consensus pour une expression donnée. 
-    Si par exemple la vitesse d'exécution d'une contrainte est modifiée en temps réel, cette modification est répercutée sur toutes les machines.
+    \item Partage complet : il n'y a qu'une seule ligne temporelle partagée pour tous les clients. 
+    Les annotations de groupes indiquent l'emplacement d'exécution. 
+    Elles servent à indiquer ou non l'exécution d'un processus sur un client, et le groupe devant parvenir à un consensus pour une expression donnée. 
+    Si par exemple la vitesse d'exécution d'une contrainte est modifiée en temps réel, cette modification est répercutée sur tous les clients qui l'exécutent.
     
     Cela permet notamment de gérer la répartition d'objets à des niveaux hiérarchiques différents~: dans le scénario~\ref{scenar.hierarchy}, si le scénario racine est dans ce mode, alors on peut correctement faire exécuter les scénarios enfants en prenant en compte les groupes de leurs objets. 
     
@@ -284,10 +313,10 @@ Trois niveaux de partage :
             Racine: & \begin{tikzpicture}
             \input{scenarios/hierarchy.tex}
             \end{tikzpicture} \\
-            $S_1$: & \begin{tikzpicture}
+            $S_1$: & \begin{tikzpicture}[scale=0.4, every node/.style={scale=0.6}]
             \input{scenarios/hierar-sub.tex}
             \end{tikzpicture} \\
-            $S_2$: & \begin{tikzpicture}
+            $S_2$: & \begin{tikzpicture}[scale=0.6, every node/.style={scale=0.6}]
             \input{scenarios/hierar-sub-2.tex}
             \end{tikzpicture} \\
         \end{tabular}
@@ -295,10 +324,12 @@ Trois niveaux de partage :
         \label{scenar.hierarchy}
     \end{figure}
     
-    \item Aucun partage : les machines n'étant pas associées à ce processus ne l'exécutent pas, celles qui y sont associées l'exécutent toutes de manière indépendante.
+    \item Aucun partage : les clients n'étant pas associées à ce processus ne l'exécutent pas, ceux qui y sont associées l'exécutent tous de manière indépendante.
     Si par exemple on assigne le groupe $A$ au scénario~\ref{scenar.general}, tous les clients de $A$ vont exécuter tous les éléments, sans communiquer sur leurs résultats. 
-    Par exemple, pour deux machines $A_1$ et $A_2$, le \trigger pourra se déclencher à des instants différents, et la condition pourra avoir une valeur différente.
-    Cela implique que les groupes assignés aux objets du scénario soient ignorés, récursivement : puisque chaque exécution va avoir des temps différents par conception, il ne peut pas y avoir de synchronisation.
+    Par exemple, pour deux clients $A_1$ et $A_2$, le \trigger pourra se déclencher à des instants différents, et la condition pourra avoir une valeur différente.
+    
+    Cela implique que les annotations de groupes assignés aux objets du scénario sont ignorés, récursivement : puisque chaque exécution va avoir des temps différents par conception, il ne peut pas vraiment y avoir de synchronisation.
+    La seule politique d'exécution qui pourrait faire sens serait que le premier client à valider un \trigger dans un scénario non partagé avertirait les clients suivants.
     
     Ce cas est notamment utile pour avoir des sous-scénarios dont plusieurs participants à une installation artistique peuvent faire l'expérience en même temps, tout en gardant une trame générale de plus haut niveau. 
     Typiquement, on peut imaginer ce cas pour une application mobile.
@@ -312,9 +343,25 @@ Trois niveaux de partage :
         \label{scenar.general}
     \end{figure}
 
-    \item Partage partiel : il peut y avoir plusieurs lignes temporelles dans un même scénario qui peuvent se resynchroniser à un instant donné. 
-    Les annotations donnent l'emplacement d'exécution, et de vérification des expressions. 
-    Une machine ne sait pas à l'avance si elle va pouvoir se déclencher ou non. 
+    \item Mixte : il peut y avoir plusieurs lignes temporelles appartenant à différents groupes dans un même scénario. Ces lignes peuvent ensuite se resynchroniser à un instant donné. 
+    
+    Les annotations donnent l'emplacement d'exécution des contraintes, des processus, et de vérification des expressions. 
+%    Un client ne sait pas à l'avance si il va pouvoir se déclencher ou non. 
+    
+    Considérons le scénario~\ref{scenar.twobranches}. 
+    La différence avec le cas «partage complet» tient dans le fait que seuls les clients appartenant au groupe $A$ vont exécuter la contrainte $A$, sans avoir l'obligation de se synchroniser entre eux. 
+    L'important est qu'une synchronisation ait lieu pour tous les clients appartenant à $A$ et $B$ lors du dernier \trigger.
+    
+    Là encore, en raison de possibilités d'exécutions divergentes du même contenu, il est impossible d'offrir une répartition hiérarchique.
+    
+    \begin{figure}[h]
+        \centering
+        \begin{tikzpicture}
+        \input{scenarios/twobranches.tex}
+        \end{tikzpicture}
+        \captionof{scenario}{Deux branches exécutées chacunes par un groupe différent.}
+        \label{scenar.twobranches}
+    \end{figure}
     
 \end{itemize}
 
@@ -386,7 +433,7 @@ Ordonnancement : par estampilles.
     \begin{tikzpicture}
     \input{scenarios/trigger-1.tex}
     \end{tikzpicture}
-    \captionof{scenario}{Des groupes $A$ et $B$ exécutent les deux contraintes temporelles tandis qu'un groupe $C$ atteint un consensus sur l'expression}
+    \captionof{scenario}{Des groupes $A$ et $C$ exécutent les deux contraintes temporelles tandis qu'un groupe $B$ atteint un consensus sur l'expression}
     \label{scenar.trigger-1}
 \end{figure}
 
@@ -404,10 +451,12 @@ Le scénario~\ref{scenar.trigger-1} peut se résoudre de plusieurs manières.
     \end{itemize}
 \end{itemize}
 
-\subsubsection{Consensus}
+\subsubsection{Consensus}\label{section.consensus}
+Comme mentionné précédemment, nous nous trouvons face à plusieurs cas 
+ou plusieurs clients doivent s'accorder sur le résultat d'une expression.
+
 Paxos, Raft sont des algorithmes permettant de garantir un consensus.%CITE 
 % https://github.com/apache/kudu
-
 
 S'il y a synchronisation, on sépare la synchronisation du consensus, de la synchronisation de l'exécution qui suit la résolution de ce consensus : 
 \begin{enumerate}
@@ -418,12 +467,32 @@ S'il y a synchronisation, on sépare la synchronisation du consensus, de la sync
 Note : abstraire la notion de consensus au sein d'un groupe.
 
 Cas avancé et non traité ici : si un scénario est exécuté en parallèle par toutes les machines, chaque groupe peut avoir un consensus différent sur chaque \trigger.
-On peut rajouter un niveau d'indirection. Le plus général : chaque objet peut être exécuté par N groupes pouvant posséder chacun N clients.
+On peut rajouter un niveau d'indirection. Le plus général : chaque objet peut être exécuté par N groupes pouvant posséder chacun M clients.
 Si un client est dans deux groupes, comment gérer le conflit ? bof.
 
-\subsubsection{Simplifications}
-- Cas ou groupe vide
-- Cas ou groupe avec un seul participant
+
+Cas synchrone : 
+* Sous-expression devient vraie
+* Expression fixe une date possible pour le réseau et notifie les autres puis se fixe au bon délai.
+
+Cas asynchrone : 
+* Sous-expression devient vraie
+* Expression envoie un message aux autres et se lance immédiatement.
+Il faut définir sur quelle machine l'expression est validée.
+
+- Cas de la borne max : \trigger, bof
+
+Pour l'instant : group leader ? ou bien tous se communiquent l'information et prennent la décision en fonction de cette information ?
+
+
+\subsubsection{Cas particuliers}
+- Cas ou groupe est vide : afficher un warning à l'auteurcar ce n'est peut-être pas désirable et significatif d'un problème matériel.
+
+
+- Cas de groupes avec un seul participant.
+
+Si par exemple on dispose de deux clients exécutant des objets en série,
+la synchronisation peut être plus simple : on n'a pas besoin de l'étape de consensus.
 \subsection{Processus boucle}
 La notion de boucle a été introduite dans~\ref{celerier2016graphical}.
 
@@ -471,101 +540,18 @@ TODO voir politiques d'exécution de réseaux de Petri dans thèse AA
     \label{scenar.simple}
 \end{figure}
 
-\begin{itemize}
-    \item Cas partagé : toutes les machines vont exécuter l'ensemble du scénario en parallèle.
-    \item Cas synchronisé : chaque machine va exécuter une partie du scénario : par exemple, une machine exécute $C_1$ et une autre $C_2$.
-\end{itemize}
-
-
 - implémentation : on rajoute des délais dans les expressions.
 
-Cas synchrone : 
-* Sous-expression devient vraie
-* Expression fixe une date possible pour le réseau et notifie les autres puis se fixe au bon délai.
-
-Cas asynchrone : 
-* Sous-expression devient vraie
-* Expression envoie un message aux autres et se lance immédiatement.
-Il faut définir sur quelle machine l'expression est validée.
-
-- Cas de la borne max : \trigger, bof
-
-Pour l'instant : group leader ? ou bien tous se communiquent l'information et prennent la décision en fonction de cette information ?
-
-- Pour l'édition temps-réel, on doit permettre d'appliquer des "filtres" (par exemple qui vont rajouter une sur-expression, etc)
 \subsection{Méchanismes de synchronisation}
 - Cas possibles : 
 
-\begin{lstlisting}
-C1 ---t--- C3
-C2 ---|--- C4
-\end{lstlisting}
-* Mode free ou synchronisé : pour chaque client ? 
-
-Cas 1 : 
-\begin{lstlisting}
-C1 ---t--- C3
-\end{lstlisting}
-C1 libre, C3 libre : dès que t est vrai, un message est envoyé au master qui envoie à C3 le \trigger. C1 s'est déjà arrêté.
-Voire, ils peuvent se trig eux même en asynchrone.
-
-C1 synchro, C3 synchro : dès que t est vrai, C1 calcule la date minimale à laquelle C3 peut être notifié, envoie le message et fixe ce temps de son côté.
-
-Cas 2 : 
-\begin{lstlisting}
-C1 ---t--- C3
-C2 ---|
-\end{lstlisting}
 
 * Synchronisation de la fin
 
 * Synchronisation du début de la suite
 
-En pratique, on n'implémente que la possibilité de synchro / désynchro toute une time node ; dire qu'une granularité plus fine est possible mais que l'intérêt n'apparaît pas en pratique dans les applications (et complexifierait l'UI pour rien).
-
-Question principale : pour un time-node, comment choisit-on sur quelle machine une condition doit être vérifiée ? Possibilité de conditions groupées : faut-il que ce soit interne au formalisme (i.e. une case à cocher) ou externe (on dit explicitement \lstinline|machine1:/truc && machine2:/truc|)
-
-\subsubsection{Cas ou il y a plusieurs machines dans un groupe}
-Attributs d'une expression : 
-\begin{itemize}
-    \item Qui vérifie cette expression : chaque machine individuellement, toutes les machines d'un groupe, n'importe quelle machine d'un groupe 
-\end{itemize}
-
-Séparer les expressions et les time-node : notamment pour le cas de la borne max, ou on doit avertir d'autres machines par la suite.
-
-Deux axes : 
-\begin{figure}[h]
-\begin{tabular}{c|c|c}
-\diagbox{Décision}{Sync} & Oui & Non \\
-\midrule
-Locale & 1 & 2 \\
-\midrule
-Partagée & 3 & 4\\        
-\end{tabular}
-\end{figure}
-\begin{itemize}
-    \item Décision locale : Pour un \trigger, soit tout le scénario est local (donc même contrainte avant / après et certains ordis n'exécutent pas du tout ce scénario), soit le premier à avoir un résultat avertit les suivants. -> Le résultat des autres machines n'influence pas l'exécution sur une machine donnée.
-    \item Décision partagée : tous les éléments d'un groupe doivent prendre une décision avec une politique donnée : soit tous doivent vérifier la condition, soit un seul.
-    \item Décision synchrone : On veut que les éléments s'arrêtent et démarrent le plus proche possible d'une même date en wall clock.
-    \item Décision asynchrone : On veut que les éléments s'arrêtent et démarrent le plus vite possible dès qu'une information est disponible.
-\end{itemize}
-
-\begin{enumerate}
-\item Décision locale synchrone : pas de sens
-\item Décision locale asynchrone : pas de sens... 
-\item Décision partagée synchrone : toutes les machines attendent qu'un unique choix soit effectué pour le résultat de l'expression
-\item Décision partagée asynchrone
-\end{enumerate}
-Extension via système de composants
-
-
-On ne synchronise qu'à chaque point d'entrée / de sortie d'un groupe de contraintes / time nodes
-\subsection{Extension des possibilités d'écriture}
-* Paramètres partagés
-
-* Pattern matching sur addresses 
-
 \section{Évaluation}\label{sec.evaluation}
+
 - Comparaison de l'algorithme "simple" et de l'algorithme avec retard
 
 
