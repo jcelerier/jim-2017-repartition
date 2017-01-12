@@ -175,7 +175,7 @@ sans avoir besoin de mettre à jour le scénario.
 	\centering
 	\includegraphics[scale=0.2]{images/groupes.eps}
 	\caption{Plusieurs groupes avec plusieurs machines dans chaque groupe}
-	\label{scenar.trigger-1}
+	\label{img.groupes}
 \end{figure}
 
 
@@ -223,78 +223,102 @@ les scénarios i-score sont très compacts (en général quelques dizaines de ki
 - Autres approches : partage du modèle lui-même.
 
 \section{Description de l'exécution}\label{sec.description}
+On sépare les objets offrant une structure temporelle, des objets possédant des données (par exemple, une automation).
 \subsection{Processus de contenu}
 On entend par processus de contenu, tous les processus produisant des données, sans se soucier de la structuration temporelle. En voici une liste non exhaustive : automation, mapping, code javascript, piano roll MIDI, audio\dots
 
 Le processus s'exécute tel quel pour toutes les machines auquel il est assigné, 
 et ne s'exécute pas pour les autres.
 
-% TODO pour devices, faire en sorte que les clients ne se connectent que à ceux qui sont en local ? Ou même mode "non connecté" (mais impossible de recevoir comme ça)
+% TODO pour devices, faire en sorte que les clients ne se connectent que à ceux qui sont en local ? Ou même mode "non connecté" (mais impossible de recevoir comme ça). Ou bien avoir une "map" d'addresse ip / port pour chaque paire client <-> device.
+
+\subsubsection{Comportements de groupes}
+-> pourquoi ne pas avoir la même chose au niveau des mappings (et pour tout ce qui n'est pas fixé de manière générale ?)
+Deux manières : offrir un processus de mapping spécialisé qui permet de définir les relations qu'on veut dans un groupe ("first", "all", "mean", "sum", etc...)
+
+Ou bien faire cette transformation à plus bas niveau (pour les devices) : les sorties sont constantes mais on peut appliquer des transformations aux entrées.
 
 \subsection{Processus Scénario}
 Le scénario est le processus central d'i-score : il met en relation les différents éléments temporels.
 
-Plusieurs manières de répartir l'exécution d'un scénario, offrant différentes finesses d'écriture, sont détaillées ci-dessous. On sépare le cas général permettant l'interactivité dans un scénario ($y$ survient après qu'un évènement $e$ se soit déclenché, visible par exemple en scénario~\ref{scenar.general}) du cas plus simple ou les dates sont fixées, visible en scénario~\ref{scenar.non-interactif}.
+Plusieurs manières de répartir l'exécution d'un scénario, offrant différentes possibilités d'écriture, sont détaillées ci-dessous. On sépare le cas général permettant l'interactivité dans un scénario (le scénario continue après qu'un évènement externe $e$ se soit déclenché, visible par exemple en scénario~\ref{scenar.general}) du cas plus simple ou les dates sont fixées, visible en scénario~\ref{scenar.non-interactif}.
+
+On travaillera dans les examples suivants avec trois groupes $A,B,C$ disposant chacun d'un nombre inconnu de clients.
+
+\subsubsection{Modes de synchronisation}
+On identifie trois niveaux de synchronisation, qui peuvent chacuns avoir leur utilité dans un cas différent : 
+\begin{itemize}
+    \item Asynchrone : lorsqu'une information interactive est disponible dans le système (par exemple «une expression se vérifie»), elle est propagée le plus vite possible aux autres noeuds qui doivent appliquer le résultat de cette information. Ce mode ne respecte pas nécessairement la sémantique avant-après de i-score mais permet de réduire la latence.
+    \item Synchrone : lorsqu'une information est disponible dans le système, elle est propagée de manière à ce que la date absolue de réalisation soit  la même (pour un observateur externe) pour tous les clients. 
+    Ce mode respecte la sémantique de i-score~: les éléments s'exécutent dans le même ordre que si le scénario n'était pas réparti, au prix d'une latence augmentée.    
+    Il convient de rappeler qu'il est physiquement impossible d'exécuter les objets avec la même précision temporelle que s'ils étaient exécutés dans un même tic d'horloge sur le même client: l'objectif est de minimiser les décalages temporels.
+    \item Précalculé : ce mode est surtout utile dans le cas non-interactif : dès qu'une date peut être fixée, elle l'est, et les clients n'attendent pas de message annonçant la fin. 
+    Plus la synchronisation des horloges sera fine entre les clients et plus ce mode se rapprochera de l'exécution dans le cas non réparti.
+\end{itemize}
+
+Les différents modes de synchronisation vont impacter : 
+\begin{itemize}
+    \item L'exécution des \triggers.
+    \item La vérification de la validité des conditions.
+    \item Le changement de vitesse d'exécution des contraintes temporelles.
+\end{itemize}
+
+Lorsqu'un choix doit être fait, un consensus peut être pris au niveau du groupe auquel est assigné l'objet. 
+Par exemple, quelle va être la vitesse à laquelle une contrainte temporelle va s'exécuter.
+Les mécanismes de consensus possibles sont détaillés plus en détail par la suite.
 
 \subsubsection{Cas interactif}
 Trois niveaux de partage : 
 
 \begin{itemize}
-    \item Aucun partage : les machines n'étant pas associées à ce processus ne l'exécutent pas, celles qui y sont associées l'exécutent toutes de manière indépendante. Note : scénarios hiérarchiques ? Cela implique que les éléments internes au scénario font tous partie du groupe du scénario.
-    Si par exemple on assigne le groupe A  au scénario~\ref{scenar.general}, tous les clients de $A$ vont exécuter tous les éléments, sans communiquer sur leurs résultats. Par exemple, pour deux machines $A_1$ et $A_2$, le \trigger pourra se déclencher à des instants différents, et la condition pourra avoir une valeur différente.
-    \item Partage complet : il n'y a qu'une seule ligne temporelle partagée pour toutes les machines. Les annotations de machines indiquent l'emplacement d'exécution. Les groupes servent à indiquer ou non l'exécution d'un processus sur une machine et le groupe devant parvenir à un consensus pour une expression donnée. Si par exemple la vitesse d'exécution d'une contrainte est modifiée en temps réel, cette modification est répercutée sur toutes les machines.
+    \item Partage complet : il n'y a qu'une seule ligne temporelle partagée pour toutes les machines. 
+    Les annotations de machines indiquent l'emplacement d'exécution. 
+    Les groupes servent à indiquer ou non l'exécution d'un processus sur une machine et le groupe devant parvenir à un consensus pour une expression donnée. 
+    Si par exemple la vitesse d'exécution d'une contrainte est modifiée en temps réel, cette modification est répercutée sur toutes les machines.
     
-    Cela permet notamment de gérer facilement la répartition à des niveaux hiérarchiques différents~:~\ref{scenar.hierarchy}. 
-    \item Partage partiel : il peut y avoir plusieurs lignes temporelles dans un même scénario qui peuvent se resynchroniser. Les annotations donnent l'emplacement d'exécution, et de vérification des expressions. Une machine ne sait pas à l'avance si elle va pouvoir se déclencher ou non. 
+    Cela permet notamment de gérer la répartition d'objets à des niveaux hiérarchiques différents~: dans le scénario~\ref{scenar.hierarchy}, si le scénario racine est dans ce mode, alors on peut correctement faire exécuter les scénarios enfants en prenant en compte les groupes de leurs objets. 
+    
+    \begin{figure}[h]
+        \centering
+        \begin{tabular}{L{3.5em}R{0.3\textwidth}}
+            Racine: & \begin{tikzpicture}
+            \input{scenarios/hierarchy.tex}
+            \end{tikzpicture} \\
+            $S_1$: & \begin{tikzpicture}
+            \input{scenarios/hierar-sub.tex}
+            \end{tikzpicture} \\
+            $S_2$: & \begin{tikzpicture}
+            \input{scenarios/hierar-sub-2.tex}
+            \end{tikzpicture} \\
+        \end{tabular}
+        \captionof{scenario}{Deux contraintes possédant chacune un scénario hiérarchique}
+        \label{scenar.hierarchy}
+    \end{figure}
+    
+    \item Aucun partage : les machines n'étant pas associées à ce processus ne l'exécutent pas, celles qui y sont associées l'exécutent toutes de manière indépendante.
+    Si par exemple on assigne le groupe $A$ au scénario~\ref{scenar.general}, tous les clients de $A$ vont exécuter tous les éléments, sans communiquer sur leurs résultats. 
+    Par exemple, pour deux machines $A_1$ et $A_2$, le \trigger pourra se déclencher à des instants différents, et la condition pourra avoir une valeur différente.
+    Cela implique que les groupes assignés aux objets du scénario soient ignorés, récursivement : puisque chaque exécution va avoir des temps différents par conception, il ne peut pas y avoir de synchronisation.
+    
+    Ce cas est notamment utile pour avoir des sous-scénarios dont plusieurs participants à une installation artistique peuvent faire l'expérience en même temps, tout en gardant une trame générale de plus haut niveau. 
+    Typiquement, on peut imaginer ce cas pour une application mobile.
+    
+    \begin{figure}[h]
+        \centering
+        \begin{tikzpicture}
+        \input{scenarios/general.tex}
+        \end{tikzpicture}
+        \captionof{scenario}{Un scénario interactif avec des interactions et des conditions ; $A,B,C,D,E$ sont les groupes associés aux éléments du modèle. On suppose l'existence de processus de contenus dans chaque contrainte temporelle.}
+        \label{scenar.general}
+    \end{figure}
+
+    \item Partage partiel : il peut y avoir plusieurs lignes temporelles dans un même scénario qui peuvent se resynchroniser à un instant donné. 
+    Les annotations donnent l'emplacement d'exécution, et de vérification des expressions. 
+    Une machine ne sait pas à l'avance si elle va pouvoir se déclencher ou non. 
     
 \end{itemize}
 
-Deux niveaux de synchronisation : 
-\begin{itemize}
-    \item Asynchrone : dès qu'une information est disponible dans le système (par exemple «une expression se vérifie»), elle est propagée le plus vite possible aux autres noeuds qui doivent appliquer le résultat de cette information.
-    \item Synchrone : lorsqu'une information est disponible dans le système, elle est propagée de manière à ce que la date absolue de réalisation soit la même pour toutes les machines.
-\end{itemize}
 
-Problème transverse : ignorer ou non la hiérarchie ? 
-
-Cas non traité : hiérarchie si on est dans le cas complètement désynchronisé. Pas de bonne réponse possible.
-
-Différence entre synchro partielle et complète : 
-\begin{itemize}
-    \item Exécution des \triggers
-    \item Validité des conditions
-    \item Changement de vitesse d'exécution des contraintes temporelles
-\end{itemize}
-
-Dans tous les cas, cela se fait au niveau des groupes, et il peut y avoir plusieurs machines par groupe.
-Donc il faut un mécanisme de décision au niveau du groupe.
--> pourquoi ne pas avoir la même chose au niveau des mappings (et pour tout ce qui n'est pas fixé de manière générale ?)
-
-\begin{figure}[h]
-	\centering
-	\begin{tikzpicture}
-	\input{scenarios/general.tex}
-	\end{tikzpicture}
-	\captionof{scenario}{Un scénario interactif avec des interactions et des conditions ; $A,B,C,D,E$ sont les groupes associés aux éléments du modèle}
-	\label{scenar.general}
-\end{figure}
-
-\begin{figure}[h]
-	\centering
-	\begin{tabular}{L{3.5em}R{0.3\textwidth}}
-		Racine: & \begin{tikzpicture}
-		\input{scenarios/hierarchy.tex}
-		\end{tikzpicture} \\
-		$S_1$: & \begin{tikzpicture}
-		\input{scenarios/hierar-sub.tex}
-		\end{tikzpicture} \\
-		$S_2$: & \begin{tikzpicture}
-		\input{scenarios/hierar-sub-2.tex}
-		\end{tikzpicture} \\
-	\end{tabular}
-	\captionof{scenario}{Deux contraintes possédant chacune un scénario hiérarchique}
-	\label{scenar.hierarchy}
-\end{figure}
 
 \subsubsection{Cas non-interactif}
 % Cas principalement développé dans rapport de master
@@ -304,15 +328,15 @@ Comme on connait les dates effectives auxquelles les objets sont sensés s'exéc
 Un parcours de graphe permet d'obtenir une estimation des dates minimales auxquelles il est possible de fixer des dates d'exécutions des éléments suivant un point d'interaction donné.
 Le même mécanisme a été utilisé dans~\cite{celerier2016rethinking} pour spécifier les dates d'exécution et de fin de flux audios.
 
-On notera qu'autoriser à modifier la vitesse d'exécution des éléments en temps réel implique de mettre à jour cette estimation sur toutes les autres machines.
 
 \begin{itemize}
-\item Avantage : s'il y a une déconnexion, cela va continuer à marcher.
+\item Avantage : s'il y a une déconnexion, l'exécution va continuer à fonctionner au moins jusqu'au prochain \trigger.
 \item Inconvénient : il suffit d'un peu de délai pour que le début de B survienne avant la fin de A. 
 Il est particulièrement important dans ce cas de garder les horloges synchronisées.
 \end{itemize}
 
-Autre possibilité : forcer la synchronicité et l'ordonnancement à chaque time node, ce qui respecte la sémantique d'i-score.
+On notera que modifier la vitesse d'exécution des éléments en temps réel implique de mettre à jour les estimations de dates sur toutes les autres machines. 
+En autorisant cela, on pert donc une certaine tolérance au partitionnement.
 
 \begin{figure}[h]
 	\centering
@@ -332,7 +356,7 @@ Dans le cas ou on a un partage de certaines lignes temporelles par certaines mac
 \begin{itemize}
 	\item Prise de décision : s'il n'y a qu'une seule ligne temporelle, chaque expression doit n'avoir qu'une valeur de vérité. Il doit donc y avoir un consensus sur la valeur de cette expression. De même pour la vitesse d'exécution des éléments.
     
-    Plusieurs algorithmes de consensus sont possibles : 
+    Plusieurs manières d'obtenir un consensus sont possibles : 
     \begin{itemize}
         \item Dans le cas des conditions, au moins une machine valide ou nie l'expression. 
         \item Dans le cas des points d'interaction, on peut fixer la valeur de l'expression à celle de la première machine qui la vérifie, à l'aide des estampilles. % Quand une décision est prise, on note la timestamp, et on compare avec les incoming timestamp
@@ -342,6 +366,19 @@ Dans le cas ou on a un partage de certaines lignes temporelles par certaines mac
 
 	\item On peut supposer que des sous-parties d'un scénario pourraient être exécutées entièrement par une machine ou groupe.
 \end{itemize}
+
+On note plusieurs problèmes possibles : 
+\begin{itemize}
+    \item La déconnexion intempestive d'un client lors d'une prise de décision. 
+    Dans ce cas, on peut s'informer de la déconnexion, en effectuant un ping régulier, et prendre la décision avec les participants restants. 
+    \item Le cas d'un \textit{ex æquo}~, si un groupe a un nombre pair de participants.
+    Il existe plusieurs possibilités de résolution : 
+    \begin{itemize}
+        \item Choisir en fonction des estampilles : le premier choix est celui qui est retenu.
+        \item Nommer un chef de groupe qui permet de départager.
+        \item Choisir au hasard.
+    \end{itemize}
+\end{itemize}
 Ordonnancement : par estampilles.
 
 \begin{figure}[h]
@@ -349,7 +386,7 @@ Ordonnancement : par estampilles.
     \begin{tikzpicture}
     \input{scenarios/trigger-1.tex}
     \end{tikzpicture}
-    \captionof{scenario}{Des groupes A et B exécutent les deux contraintes temporelles et un groupe C l'expression}
+    \captionof{scenario}{Des groupes $A$ et $B$ exécutent les deux contraintes temporelles tandis qu'un groupe $C$ atteint un consensus sur l'expression}
     \label{scenar.trigger-1}
 \end{figure}
 
@@ -384,28 +421,12 @@ Cas avancé et non traité ici : si un scénario est exécuté en parallèle par
 On peut rajouter un niveau d'indirection. Le plus général : chaque objet peut être exécuté par N groupes pouvant posséder chacun N clients.
 Si un client est dans deux groupes, comment gérer le conflit ? bof.
 
-\subsection{Introduction de primitives réparties dans i-score}
-TODO voir politiques d'exécution de réseaux de Petri dans thèse AA
+\subsubsection{Simplifications}
+- Cas ou groupe vide
+- Cas ou groupe avec un seul participant
+\subsection{Processus boucle}
+La notion de boucle a été introduite dans~\ref{celerier2016graphical}.
 
-\subsubsection{Répartition des contenus dans le cas non-interactif}
-\begin{figure}[h]
-    \centering
-    \begin{tikzpicture}
-    \input{scenarios/simple.tex}
-    \end{tikzpicture}
-    \captionof{scenario}{Deux contraintes temporelles se suivent}
-    \label{scenar.simple}
-\end{figure}
-
-\begin{itemize}
-    \item Cas partagé : toutes les machines vont exécuter l'ensemble du scénario en parallèle.
-    \item Cas synchronisé : chaque machine va exécuter une partie du scénario : par exemple, une machine exécute $C_1$ et une autre $C_2$.
-\end{itemize}
-
-On sépare donc les objets structurants, des objets possédant des données (par exemple, une automation).
-
-
-\subsubsection{Répartition des contenus dans le cas interactif}
 \subsection{Récapitulatif}
 On choisit pour la répartition un modèle de document partagé : toutes les machines voient le même scénario.
 
@@ -436,6 +457,24 @@ On décrit ici la sémantique des différentes méthodes de synchronisation vues
 
 On fait le choix de décrire ce modèle via la sémantique existante de i-score ; cela peut être ramené à des réseaux de Petri assez facilement.
 
+
+\subsection{Introduction de primitives réparties dans i-score}
+TODO voir politiques d'exécution de réseaux de Petri dans thèse AA
+
+\subsubsection{Répartition des contenus dans le cas non-interactif}
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}
+    \input{scenarios/simple.tex}
+    \end{tikzpicture}
+    \captionof{scenario}{Deux contraintes temporelles se suivent}
+    \label{scenar.simple}
+\end{figure}
+
+\begin{itemize}
+    \item Cas partagé : toutes les machines vont exécuter l'ensemble du scénario en parallèle.
+    \item Cas synchronisé : chaque machine va exécuter une partie du scénario : par exemple, une machine exécute $C_1$ et une autre $C_2$.
+\end{itemize}
 
 
 - implémentation : on rajoute des délais dans les expressions.
