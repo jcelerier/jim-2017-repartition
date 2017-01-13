@@ -64,12 +64,12 @@ Pour conclure, les performances du système développé seront présentées.
 \section{Études de cas}
 
 \subsection{Projet Quarrè}
-Quarrè est une installation en son spatialisé réalisée par Pierre Cochard au SCRIME, qui utilise Max/MSP, i-score, et une application mobile développée pour l'occasion. 
+Quarrè (fig.~\ref{img.quarre}) est une installation en son spatialisé réalisée par Pierre Cochard au SCRIME, qui utilise Max/MSP, i-score, et une application mobile développée pour l'occasion. 
 Elle implique plusieurs participants possédant chacun un téléphone.
 
 Une trame principale d'environ trente minutes se déroule.
 Durant cette trame, à différents moments, des participants vont pouvoir interagir via l'application mobile, qui les avertis par un compte à rebours. 
-Ils disposent ensuite d'une durée déterminée pour agir : changer un paramètre d'un effet, déclencher des sons, spatialiser un objet sonore\dots
+Ils disposent ensuite d'une durée déterminée pour agir : changer un paramètre d'un effet, déclencher des sons, spatialiser un objet sonore\dots 
 Les actions possibles varient en fonction du nombre de participants, pouvant aller de un à cinq.
 
 %- Cas des applis de téléphone : un objet qui s'exécute sur plusieurs machines en parallèle (dont on veut aggréger les résultats)
@@ -78,7 +78,7 @@ Les actions possibles varient en fonction du nombre de participants, pouvant all
     \centering
     \includegraphics[scale=0.2]{images/quarre.jpg}
     \caption{Quarrè sans participants. Pierre Cochard, 2016.}
-    \label{img.groupes}
+    \label{img.quarre}
 \end{figure}
 
 \subsection{Support des périphériques embarqués}
@@ -255,6 +255,7 @@ On choisit de répartir nos objets autour d'un même document partagé par toute
 
 Cela ne pose pas de problème de mémoire, même sur de l'embarqué tel que Raspberry Pi : l'empreinte mémoire d'un scénario est minime en comparaison de l'occupation des bibliothèques utilisées (quelques dizaines de kilo-octets contre environ 50 méga-octets).
 
+On utilise le protocole TCP pour tous les messages relatifs à la répartition, notamment pour ses garanties d'ordonnancement.
 \subsection{Répartition de l'édition}
 - Partage de file undo - redo. Transformations opérationnelles. %CITE
 
@@ -581,7 +582,6 @@ Quand il n'y a pas de point d'interaction, le cas synchrone n'offre pas d'avanta
 \input{scenarios/deplacement-simple.tex}
 \end{tikzpicture}
 \caption{Cas asynchrone}
-%\captionof{scenario}{Deux contraintes temporelles se suivent}
 \end{subfigure}
 
 \begin{subfigure}{.5\linewidth}
@@ -589,13 +589,14 @@ Quand il n'y a pas de point d'interaction, le cas synchrone n'offre pas d'avanta
     \input{scenarios/deplacement-precalcule.tex}
     \end{tikzpicture}
     \caption{Cas précalculé}
-%    \captionof{scenario}{Deux contraintes temporelles se suivent}
 \end{subfigure}
-\caption{Méthode pour l'exécution de deux contraintes en série sur deux machines séparées}
+\caption{Transformations pour l'exécution de deux contraintes en série sur deux machines séparées}
 \label{scenar.deplacement}
 \end{figure}
 
 - implémentation : on rajoute des délais dans les expressions.
+
+- Introduire la possibilité pour une expression de faire une comparaison avec le wall clock.
 
 
 Cas à traiter : 
@@ -604,7 +605,23 @@ Cas à traiter :
 - Déplacement avec plusieurs scénarios (consensus ?) -> introduire un device virtuel qui règle le consensus
 
 \subsubsection{Modélisation dans le cas interactif}
+On reprend ici le scénario~\ref{scenar.trigger-1}, qui possède un \trigger, géré par le groupe B.
+ 
+\begin{itemize}
+%	\item $T_e: A_\min \land D_\min$
+	\item $T_B: $ consensus du groupe sur l'expression B
+	\item $T_A: M_A$, $T_D: M_D$, $T_C: M_C$
+\end{itemize}
 
+Dans le cas asynchrone: $M_A, M_D, M_C$ sont des messages qui vont déclencher les \trigger $T_A, T_D, T_C$ dès qu'ils sont reçus.
+
+Cas asynchrone ordonné : les messages partent le plus tôt possible, mais $C$, $D$, ne peuvent se déclencher avant la fin de A.
+
+Cas synchrone (est-ce le bon mot ?) : on essaye de faire en sorte que les choses s'arrêtent et démarre le plus proche possible.
+Le scénario est le même que dans le cas asynchrone. La différence est dans les messages qui sont envoyés : $M_A, M_D, M_C$ fixent la date à laquelle $T_A$, $T_D$, $T_C$ doivent partir.
+
+On notera qu'il est possible d'exprimer des variantes plus fines : par exemple synchroniser les fins mais pas les débuts. 
+Néanmoins, ce travail a pour objectif de ne pas encombrer le compositeur d'une finesse trop peu souvent nécessaire, en lui offrant un accès facile à des concepts de haut-niveau dont la nécessité est apparue lors des études de cas.
 \subsection{Méchanismes de synchronisation}
 - Cas possibles : 
 
@@ -623,5 +640,48 @@ En LAN gigabit on est en général < à une milliseconde.
 
 
 \printbibliography 
+
+\newpage
+
+\section*{Annexe : politiques de répartition dans le cas interactif}
+
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}{.5\linewidth}
+		\begin{tikzpicture}
+		\input{scenarios/deplacement-interactif-source.tex}
+		\end{tikzpicture}
+		\caption{Un scénario possédant un \trigger que l'on veut répartir sur les clients des groupes $A,B,C,D$}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[h]
+	\centering
+	\ContinuedFloat
+	\begin{subfigure}{.5\linewidth}
+		\begin{tikzpicture}
+		\input{scenarios/deplacement-interactif-async.tex}
+		\draw (4.4, 31.95) node {$M_A, M_D, M_C$};
+		\end{tikzpicture}
+		\caption{Répartition du scénario (a) dans le cas asynchrone : les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $C$ s'arrêteront et démarreront sans ordre prévisible.}
+	\end{subfigure}
+\end{figure}
+
+
+\begin{figure}[h]
+	\centering
+	\ContinuedFloat
+	\begin{subfigure}{.5\linewidth}
+		\begin{tikzpicture}
+		\input{scenarios/deplacement-interactif-sync.tex}
+		\draw (4.8, 32) node {$M_A$}; 
+		
+		\draw (3.2, 30.6905) node {$M_D$}; 
+		\draw (3.2, 29.1594) node {$M_C$}; 
+		\end{tikzpicture}
+		\caption{Répartition du scénario (a) dans le cas asynchrone ordonné: les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $C$ s'arrêteront dans l'ordre, avec un délai potentiel entre la fin de $A,D$ et le début de $C$.}
+	\end{subfigure}
+	
+\end{figure}
 
 \end{document}
