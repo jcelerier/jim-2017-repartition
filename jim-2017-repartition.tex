@@ -100,26 +100,46 @@ des clips audio ou vidéo de démarrer au même instant sur plusieurs machines,
 puis de rester synchronisés durant la lecture.
 
 \subsection{Redondance}
-Le matériel n'étant pas infaillible, la question de la résilience se pose~: comment mitiger une panne de l'ordinateur principal pendant une représentation artistique ?
+Le matériel n'étant pas infaillible, la question de la tolérance aux pannes se pose~: comment mitiger une panne de l'ordinateur principal pendant une représentation artistique ?
 
 Une des possibilités est d'offrir un système de redondance : si une machine tombe en panne, une autre prend le relais le plus vite possible.
-La machine prenant le relai doit donc avoir été préalablement synchronisée avec la machine étant tombé en panne, pour garantir le moins de perturbations possibles.
+La machine prenant le relai doit donc avoir été maintenue en synchronisation avec la machine étant tombé en panne, pour garantir le moins de perturbations possibles lors de la bascule.
  
 %- Donner la possibilité de faire un dialogue (boucle avec un coup un \trigger qui vient de A, un coup un \trigger qui vient de B, etc)
 %- Approche alternative avec application mobile.
 
 \subsection{État de l'art}
 \subsubsection{Rappel du modèle d'i-score}
-\cite{celerier2015ossia}
-Vocabulaire. Prendre article SMC.
-
-Mettre accent sur hiérarchie
+Ce document présente la problématique de répartition dans le cadre du logiciel i-score, qui implémente le modèle OSSIA\cite{celerier2015ossia}.
+Il consiste en un agencement d'éléments permettant de définir des comportements temporels. 
+Les éléments dont nous avons besoin ici sont : 
+\begin{itemize}
+    \item \vocab{Contrainte temporelle} : décrit un écoulement de temps. Représenté par un trait horizontal.
+    \item \vocab{Nœud temporel} : synchronise le début et la fin de plusieurs contraintes temporelles. Représenté par un trait vertical.
+    Peut porter un \vocab{point d'interaction}, qui décrit l'attente et la résolution d'une condition externe pour stopper les contraintes précédentes et démarrer les suivantes; les contraintes précédentes seront alors en partie représentées par des pointillés pour exprimer l'incertitude.
+    \item \vocab{Processus} : contenu dans les contraintes temporelles, permet l'exécution d'un comportement à chaque tic d'horloge. Par exemple, une automation.
+    \item \vocab{État} : permet d'envoyer un message à un temps donné. Représenté par un point.
+\end{itemize}
+Des exemples sont visibles en section~\ref{sec.description}, par exemple les scénarios~\ref{scenar.hierarchy} et~\ref{scenar.general}.
 %\subsubsection{Répartition à l'édition}
 \subsubsection{Répartition à l'exécution}
 %\subsubsection{Lien entre la répartition à l'édition et la répartition à l'exécution}
 
-
 \subsubsection{Horloges}
+En raison de la nature temporelle du problème présenté, on s'intéresse avant tout aux mécanismes possibles pour la gestion du temps entre plusieurs machines.
+
+La littérature sur les systèmes distribués distingue plusieurs familles d'horloges : 
+\begin{itemize}
+    \item Les horloges physiques marquent l'avancement du temps dans le monde matériel.
+    \item Les horloges logiques marquent l'avancement du temps dans les étapes d'un algorithme réparti, donc sans relation avec du temps en secondes.
+    \item Plus récemment, les horloges hybrides ont été introduites afin de concilier les deux mondes.
+\end{itemize}
+
+Les deux principaux mécanismes pour la synchronisation d'horloges physiques sont NTP et PTP. 
+
+Les horloges logiques ont été introduites par Leslie Lamport~\cite{lamport1978time} afin d'offrir des possibilités de vérification sur les systèmes répartis.
+
+
 Problème de l'horloge : 
 \begin{itemize}
 \item Si on utilise l'horloge système, pas de garantie qu'elle soit bien synchronisée. 
@@ -214,7 +234,7 @@ Un groupe est un ensemble de clients.
 
 Les compositeurs ne manipulent jamais directement la notion de client, uniquement celle d'un groupe qui peut contenir zéro, un, ou plusieurs clients.
 
-De manière générale, quand plusieurs clients font partie d'un même groupe, cela signifie qu'ils vont réaliser les mêmes tâches, de manière synchrone ou asynchrone.
+De manière générale, quand plusieurs clients font partie d'un même groupe, cela signifie qu'ils vont réaliser les mêmes tâches, à des degrés de synchronisation variables.
 
 L'intérêt d'un groupe est la tolérance aux pannes, déconnections, reconnections, et changements d'installation. 
 Par exemple, si une machine tombe en panne, on peut la remplacer par une autre simplement en l'assignant au même groupe que la machine en panne 
@@ -298,15 +318,26 @@ On travaillera dans les examples suivants avec trois groupes $A,B,C$ disposant c
 On pourra supposer que les contraintes temporelles portent chacune des processus de contenus, qui ne sont pas représentés ici afin de garder les figures simples.
 
 \subsubsection{Modes de synchronisation}
-On identifie trois niveaux de synchronisation, qui peuvent chacuns avoir leur utilité dans un cas différent : 
+Il est difficile d'offrir une synchronisation forte (par exemple avec une précision d'une milliseconde, dans un système réparti\cite{sheehy2015there}. Une contraainte additonnelle est le fonctionnement du système sur du matériel non-professionel, n'offrant donc pas le support de fonctionnalités telles que Ethernet synchrone ou PTP.
+
+On identifie deux possibilités de synchronisation, manifestant leur utilité dans des cas différent : 
 \begin{itemize}
     \item Asynchrone : lorsqu'une information interactive est disponible dans le système (par exemple «une expression se vérifie»), elle est propagée le plus vite possible aux autres noeuds qui doivent appliquer le résultat de cette information. Ce mode ne respecte pas nécessairement la sémantique avant-après de i-score mais permet de réduire la latence.
-    \item Synchrone : lorsqu'une information est disponible dans le système, elle est propagée de manière à ce que la date absolue de réalisation soit  la même (pour un observateur externe) pour tous les clients. 
-    Ce mode respecte la sémantique de i-score~: les éléments s'exécutent dans le même ordre que si le scénario n'était pas réparti, au prix d'une latence augmentée.    
+    \item Simultané : lorsqu'une information est disponible dans le système, elle est propagée de manière à ce que la date absolue de réalisation soit la même (pour un observateur externe) pour tous les clients. 
+    C'est utile notamment dans le cas non-interactif : dès qu'une date peut être fixée, elle l'est, et les clients n'attendent pas de message annonçant la fin. 
     Il convient de rappeler qu'il est physiquement impossible d'exécuter les objets avec la même précision temporelle que s'ils étaient exécutés dans un même tic d'horloge sur le même client: l'objectif est de minimiser les décalages temporels.
-    \item Précalculé : ce mode est surtout utile dans le cas non-interactif : dès qu'une date peut être fixée, elle l'est, et les clients n'attendent pas de message annonçant la fin. 
-    Plus la synchronisation des horloges sera fine entre les clients et plus ce mode se rapprochera de l'exécution dans le cas non réparti.
 \end{itemize}
+
+De plus, on considère les possibilités d'ordonnancement des évènements lors de la communication entre machine :
+
+\begin{itemize}
+    \item Mode ordonné : respecte la sémantique d'i-score~: les éléments s'exécutent dans le même ordre que si le scénario n'était pas réparti, au prix d'une latence augmentée en présence d'interactivité.
+    \item Mode non-ordonné : ne respecte pas la sémantique d'i-score~: une exécution d'un objet peut terminer après que l'exécution de l'objet suivant ait commencé. En revanche, la latence est diminuée.    
+\end{itemize}
+
+De manière générale, on repose sur une bonne synchronisation des horloges au niveau du système.
+i-score est capable de compenser les délais si l'horloge système se resynchronise.
+Plus la synchronisation des horloges sera fine entre les clients et plus l'exécution se rapprochera de l'exécution dans le cas non réparti.
 
 Les différents modes de synchronisation vont impacter : 
 \begin{itemize}
@@ -581,14 +612,14 @@ Quand il n'y a pas de point d'interaction, le cas synchrone n'offre pas d'avanta
 \begin{tikzpicture}
 \input{scenarios/deplacement-simple.tex}
 \end{tikzpicture}
-\caption{Cas asynchrone}
+\caption{Cas asynchrone non-ordonné}
 \end{subfigure}
 
 \begin{subfigure}{.5\linewidth}
     \begin{tikzpicture}
     \input{scenarios/deplacement-precalcule.tex}
     \end{tikzpicture}
-    \caption{Cas précalculé}
+    \caption{Cas simultané ordonné}
 \end{subfigure}
 \caption{Transformations pour l'exécution de deux contraintes en série sur deux machines séparées}
 \label{scenar.deplacement}
