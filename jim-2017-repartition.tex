@@ -122,7 +122,19 @@ Les éléments dont nous avons besoin ici sont :
 \end{itemize}
 Des exemples sont visibles en section~\ref{sec.description}, par exemple les scénarios~\ref{scenar.hierarchy} et~\ref{scenar.general}.
 %\subsubsection{Répartition à l'édition}
-\subsubsection{Répartition à l'exécution}
+\subsubsection{Musique répartie}
+On trouve plusieurs familles de logiciels et outils orientés réseau pour la production musicale.
+On distingue notamment les applications ayant pour but de synchroniser des 
+flux audio sur plusieurs machines, des applications permettant une collaboration lors 
+de l'écriture et de la composition musicale.
+
+Dans le premier cas, on notera principalement les mutiples incarnations de NetJACK\cite{carot2009netjack}, 
+ayant pour but de rendre accessible les éléments d'une baie de raccordement JACK sur plusieurs machines. Un recensement plus complet des serveurs de son distribués ayant pour but les performances musicales en réseau est donné dans~\cite{carot2007networked}. 
+
+Différents logiciels permettant une écriture collaborative, mais non synchronisée, existent : 
+OHMStudio\cite{koszolko2015crowdsourcing} reprend le principe des séquenceurs traditionnels et permet un partage de document à plusieurs utilisateurs, sur internet.
+Splice\cite{pignato2015deterritorialized} suit le même principe, mais est orienté vers la communauté des \emph{beat-makers}.
+
 %\subsubsection{Lien entre la répartition à l'édition et la répartition à l'exécution}
 
 \subsubsection{Horloges}
@@ -135,65 +147,76 @@ La littérature sur les systèmes distribués distingue plusieurs familles d'hor
     \item Plus récemment, les horloges hybrides ont été introduites afin de concilier les deux mondes.
 \end{itemize}
 
-Les deux principaux mécanismes pour la synchronisation d'horloges physiques sont NTP et PTP. 
+Les deux principaux mécanismes pour la synchronisation d'horloges physiques sont \emph{Network Time Protocol}\cite{mills1991internet} et \emph{Precision Time Protocol}\cite{peng2009research}. 
+Le premier est disponible sur de nombreuses plate-formes et permet en pratique d'atteindre une précision de synchronisation de quelques milliseconde sur internet. 
+Le second est plus précis et promet une précision proche de la microseconde. 
+Cependant, cela dépend de la précision avec laquelle les paquets sont estampillés\footnote{timestamped} et donc de la qualité de l'horloge de l'implémentation PTP. 
+En pratique, l'intérêt de PTP sera plus prononcé lorsque du matériel dédié (\emph{Grand Master Clock}) est disponible pour réaliser l'estampillage des paquets.
 
-Les horloges logiques ont été introduites par Leslie Lamport~\cite{lamport1978time} afin d'offrir des possibilités de vérification sur les systèmes répartis.
+Un des désavantages de l'utilisation des horloges physiques pour l'estampillage est qu'elles ne sont pas monotones : notamment, les secondes intercalaires bouleversent régulièrement les systèmes distribués basés sur ces horloges.
 
+Les horloges logiques ont été introduites par Leslie Lamport~\cite{lamport1978time} afin d'offrir des possibilités de raisonnement et de vérification formelles sur l'écoulement du temps dans les systèmes répartis.
+Notamment, les estampilles de Lamport permettent d'offrir un ordre partiel entre les messages échangés dans un système réparti.
 
-Problème de l'horloge : 
-\begin{itemize}
-\item Si on utilise l'horloge système, pas de garantie qu'elle soit bien synchronisée. 
-Et NTP pas dispo partout (on n'a pas forcément les droits sur un téléphone pour changer l'heure).
-Horloge i-score se resynchronise déjà en cas de délai sur une machine.
-\item Si on utilise une horloge interne, problème de la synchronisation avec l'horloge système (pour le tick)
-\end{itemize}
-\url{http://www.cse.buffalo.edu/tech-reports/2014-04.pdf}
-\url{http://queue.acm.org/detail.cfm?id=2745385}
-\url{http://radar.oreilly.com/2012/10/google-spanner-relational-database.html}
-\url{http://www.ntp.org/ntpfaq/NTP-s-sw-clocks-quality.htm}
-https://en.wikipedia.org/wiki/Synchronous_Ethernet
-https://en.wikipedia.org/wiki/Time_and_frequency_transfer
-http://vlsicad.ucsd.edu/courses/ece260b-w07/papers/clock/Friedman.pdf
-http://www.ceu-lang.org/try.php
-https://zookeeper.apache.org/
+Ce mécanisme a été par la suite généralisé, d'abord par les horloges vectorielles, puis par les horloges matricielles. 
+Dans le premier cas, chaque message contient un tableau contenant l'horloge de son émetteur ainsi que les horloges connues des autres processus. Dans le second cas, chaque message contient le vecteur contenant les vecteurs d'horloges de chaque processus.
 
-Faire la relation entre notre système et le problème CAP : \url{https://en.wikipedia.org/wiki/PACELC_theorem}
+Enfin, des solutions existent pour maintenir un lien entre les horloges logiques et physiques. 
+Par exemple, Google a introduit TrueTime dans le cadre de la base de données distribuée Spanner\cite{corbett2013spanner}. 
+TrueTime travaille avec des intervalles plutôt que des dates précises, et requiert une synchronisation très précise des horloges physiques, utilisant des GPS et des horloges atomiques.
 
-Horloges logiques : équivalent à envoyer une timestamp à chaque tick (on arrive donc à un méchanisme de vector clock approximatif). 
-
-Synchro d'horloges de deux clionts dont une qui ralenti, si elles exécutent le même 
-scénario ? Il faut les recaler régulièrement. 
-
-Possibilité : externe (NTP, etc) ou interne : \url{https://github.com/ethanlim/NetworkTimeProtocol}
-
-Recaler dès qu'on accumule du retard ?
+Les horloges logiques \emph{hybrides}\cite{kulkarni2014logical} offrent des garanties de causalités sur une horloge physique proche de la précision de NTP, avec une granularité proche de la microseconde.
 
 
+%Problème de l'horloge : 
+%\begin{itemize}
+%\item Si on utilise l'horloge système, pas de garantie qu'elle soit bien synchronisée. 
+%Et NTP pas dispo partout (on n'a pas forcément les droits sur un téléphone pour changer l'heure).
+%Horloge i-score se resynchronise déjà en cas de délai sur une machine.
+%\item Si on utilise une horloge interne, problème de la synchronisation avec l'horloge système (pour le tick)
+%\end{itemize}
+%\url{http://www.cse.buffalo.edu/tech-reports/2014-04.pdf}
+%\url{http://queue.acm.org/detail.cfm?id=2745385}
+%\url{http://radar.oreilly.com/2012/10/google-spanner-relational-database.html}
+%\url{http://www.ntp.org/ntpfaq/NTP-s-sw-clocks-quality.htm}
+%\url{https://en.wikipedia.org/wiki/Synchronous_Ethernet}a
+%\url{https://en.wikipedia.org/wiki/Time_and_frequency_transfer}
+%\url{http://vlsicad.ucsd.edu/courses/ece260b-w07/papers/clock/Friedman.pdf}
+%\url{http://www.ceu-lang.org/try.php}
+%\url{https://zookeeper.apache.org/}
 
-On peut introduire un recalage sur la master clock entre chaque tick.
+%Faire la relation entre notre système et le problème CAP : \url{https://en.wikipedia.org/wiki/PACELC_theorem}
 
-Ce qu'on fait : ping régulier vers chaque client (toutes les 100 millisecondes)
+%Horloges logiques : équivalent à envoyer une timestamp à chaque tick (on arrive donc à un méchanisme de vector clock approximatif). 
 
-Quand quelque chose doit se synchroniser, on dit à chaque client à quel instant il est supposé arriver par rapport à son horloge système.
+%Synchro d'horloges de deux clionts dont une qui ralenti, si elles exécutent le même  scénario ? Il faut les recaler régulièrement. 
 
-Quand un client reçoit un ordre pour un timenode à t, il l'applique dès que t <= local(t) (modulo un tick?)
+%Possibilité : externe (NTP, etc) ou interne : \url{https://github.com/ethanlim/NetworkTimeProtocol}
 
+%Recaler dès qu'on accumule du retard ?
 
+%On peut introduire un recalage sur la master clock entre chaque tick.
 
-Possibilité : synchronisation via démon externe (PTP, NTP...), mais pas toujours possible (on ne peut pas supposer que l'utilisateur a les droits pour changer l'horloge sur sa machine).
+% Ce qu'on fait : ping régulier vers chaque client (toutes les 100 millisecondes)
 
-Synchronous ethernet
+% Quand quelque chose doit se synchroniser, on dit à chaque client à quel instant il est supposé arriver par rapport à son horloge système.
 
-Ableton Link : synchro sur les ticks musicaux 
+% Quand un client reçoit un ordre pour un timenode à t, il l'applique dès que t <= local(t) (modulo un tick?)
 
-Avoir une horloge propre à i-score ? Mais du coup maintenant il faut la synchroniser à l'horloge système. 
+% Possibilité : synchronisation via démon externe (PTP, NTP...), mais pas toujours possible (on ne peut pas supposer que l'utilisateur a les droits pour changer l'horloge sur sa machine).
 
-\subsubsection{Problématique de la sécurité}
-On veut : résistance aux "normal" failures, pas Byzantine failures.
+% Synchronous ethernet
 
-\subsubsection{Synchronisation de médias}
-- pas pour l'instant... doivent être au même endroit sur la même machine.
-Ableton Link ? Netjack ?
+% Ableton Link : synchro sur les ticks musicaux 
+
+% Avoir une horloge propre à i-score ? Mais du coup maintenant il faut la synchroniser à l'horloge système. 
+
+%\subsubsection{Problématique de la sécurité}
+%On veut : résistance aux "normal" failures, pas Byzantine failures.
+
+% \subsubsection{Synchronisation de médias}
+% - pas pour l'instant... doivent être au même endroit sur la même machine.
+% Ableton Link ? Netjack ?
 
 \section{Approche}
 Cette section détaille les choix de haut niveau réalisés.
@@ -211,19 +234,19 @@ On prendra donc garde à ne pas confondre la forme de répartition qui existe d�
 Enfin, la section~\ref{sec.evaluation} présente une évaluation des performances dans le cadre 
 d'une implémentation pratique.
 
--------------------------------------------
-Première approche basées sur réseau de Pe-tri.
+%-------------------------------------------
+%Première approche basées sur réseau de Pe-tri.
 
-Puis migration du modèle d'i-score maintenant autonome.
+%Puis migration du modèle d'i-score maintenant autonome.
 
 
-- Problème des devices. Note : si on se permet d'envoyer des messages OSC quelconques (i.e. pas dans l'arbre), ça peut simplifier des choses. Aussi, permettre devices qui sont juste en mode envoi ? Il faut un autre proto que OSC ou Minuit...
+%- Problème des devices. Note : si on se permet d'envoyer des messages OSC quelconques (i.e. pas dans l'arbre), ça peut simplifier des choses. Aussi, permettre devices qui sont juste en mode envoi ? Il faut un autre proto que OSC ou Minuit...
 
-Aussi, refactoriser pour utiliser tout i-score en librairie
+%Aussi, refactoriser pour utiliser tout i-score en librairie
 
-Différentes possibilités de répartition sont disponibles selon les types de processus.
+%Différentes possibilités de répartition sont disponibles selon les types de processus.
 
-Détailler les implications des choix par rapport au théorême CAP et PACELT.
+%Détailler les implications des choix par rapport au théorême CAP et PACELT.
 
 \subsection{Nouvelles notions}
 Nous nous trouvons en présence de plusieurs machines qui communiquent et partagent un document.
@@ -281,6 +304,8 @@ On choisit de répartir nos objets autour d'un même document partagé par toute
 Cela ne pose pas de problème de mémoire, même sur de l'embarqué tel que Raspberry Pi : l'empreinte mémoire d'un scénario est minime en comparaison de l'occupation des bibliothèques utilisées (quelques dizaines de kilo-octets contre environ 50 méga-octets).
 
 On utilise le protocole TCP pour tous les messages relatifs à la répartition, notamment pour ses garanties d'ordonnancement.
+
+On suppose ici que les horloges des machines sont synchronisées, au moins via NTP.
 \subsection{Répartition de l'édition}
 - Partage de file undo - redo. Transformations opérationnelles. %CITE
 
