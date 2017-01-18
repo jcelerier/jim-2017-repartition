@@ -14,10 +14,11 @@
 \usepackage{xspace}
 \usepackage{array}
 \usepackage{subcaption}
+\usepackage{placeins}
 \usepackage[backend=biber]{biblatex}
 \addbibresource{biblio.bib}
 
-\setmainfont{Tribun ADF Std}
+%\setmainfont{Tribun ADF Std}
 
 \newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}   %% centered
 \newcolumntype{R}[1]{>{\raggedright\arraybackslash}m{#1}}  %% right aligned
@@ -30,7 +31,7 @@
 \DeclareCaptionType{scenario}[Scénario]
 % Title.
 % ------
-\title{Écriture et exécution répartie de scénarios interactifs}
+\title{Exécution répartie de scénarios interactifs}
 
 \threeauthors
   {Auteur 1} {Organisme \\ Adresse électronique}
@@ -128,7 +129,7 @@ On distingue notamment les applications ayant pour but de synchroniser des
 flux audio sur plusieurs machines, des applications permettant une collaboration lors 
 de l'écriture et de la composition musicale.
 
-Dans le premier cas, on notera principalement les mutiples incarnations de NetJACK\cite{carot2009netjack}, 
+Dans le premier cas, on notera principalement les multiples incarnations de NetJACK\cite{carot2009netjack}, 
 ayant pour but de rendre accessible les éléments d'une baie de raccordement JACK sur plusieurs machines. Un recensement plus complet des serveurs de son distribués ayant pour but les performances musicales en réseau est donné dans~\cite{carot2007networked}. 
 
 Différents logiciels permettant une écriture collaborative, mais non synchronisée, existent : 
@@ -163,9 +164,9 @@ Dans le premier cas, chaque message contient un tableau contenant l'horloge de s
 
 Enfin, des solutions existent pour maintenir un lien entre les horloges logiques et physiques. 
 Par exemple, Google a introduit TrueTime dans le cadre de la base de données distribuée Spanner\cite{corbett2013spanner}. 
-TrueTime travaille avec des intervalles plutôt que des dates précises, et requiert une synchronisation très précise des horloges physiques, utilisant des GPS et des horloges atomiques.
+TrueTime travaille avec des intervalles plutôt que des dates précises, et requiert une synchronisation très précise des horloges physiques, utilisant des signaux GPS et des horloges atomiques.
 
-Les horloges logiques \emph{hybrides}\cite{kulkarni2014logical} offrent des garanties de causalités sur une horloge physique proche de la précision de NTP, avec une granularité proche de la microseconde.
+Les horloges logiques \textit{hybrides}\cite{kulkarni2014logical} offrent des garanties de causalités sur une horloge physique proche de la précision de NTP, avec une granularité proche de la microseconde.
 
 
 %Problème de l'horloge : 
@@ -264,7 +265,7 @@ Les compositeurs ne manipulent jamais directement la notion de client, uniquemen
 
 De manière générale, quand plusieurs clients font partie d'un même groupe, cela signifie qu'ils vont réaliser les mêmes tâches, à des degrés de synchronisation variables.
 
-L'intérêt d'un groupe est la tolérance aux pannes, déconnections, reconnections, et changements d'installation. 
+Un des intérêts d'un groupe est la tolérance aux pannes, déconnections, reconnections, et changements d'installation. 
 Par exemple, si une machine tombe en panne, on peut la remplacer par une autre simplement en l'assignant au même groupe que la machine en panne 
 sans avoir besoin de mettre à jour le scénario.
 
@@ -280,7 +281,7 @@ sans avoir besoin de mettre à jour le scénario.
 \subsection{Topologie}
 Maître-esclave pour l'édition.
 
-Pour des raisons de simplicité, la première mise en œuvre se fait via une toplogie réseau en étoile : un maître gère 
+Pour des raisons de simplicité, la première mise en œuvre se fait via une topologie réseau en étoile : un maître gère 
 le déroulement général de l'exécution. 
 Les différents clients communiquent au travers de ce maître, avec les avantages et inconvénients que cela implique : 
 \begin{itemize}
@@ -290,10 +291,10 @@ Les différents clients communiquent au travers de ce maître, avec les avantage
 
 On détaille dans les sections suivantes les cas ou des topologies différentes peuvent montrer un intérêt.
 
-Pour l'exécution : dans certains cas deux clients peuvent échanger directement.
-Il faut décrire ces cas.
+%Pour l'exécution : dans certains cas deux clients peuvent échanger directement.
+%Il faut décrire ces cas.
 
-Si groupes avec plusieurs clients : "group leader" ? responsable de la communication ? avoir un "plus court chemin" permanent ?
+%Si groupes avec plusieurs clients : "group leader" ? responsable de la communication ? avoir un "plus court chemin" permanent ?
 
 \subsection{Modèle}
 i-score se base sur une approche orientée document.
@@ -306,12 +307,12 @@ Cela ne pose pas de problème de mémoire, même sur de l'embarqué tel que Rasp
 On utilise le protocole TCP pour tous les messages relatifs à la répartition, notamment pour ses garanties d'ordonnancement.
 
 On suppose ici que les horloges des machines sont synchronisées, au moins via NTP.
-\subsection{Répartition de l'édition}
-- Partage de file undo - redo. Transformations opérationnelles. %CITE
+%\subsection{Répartition de l'édition}
+%- Partage de file undo - redo. Transformations opérationnelles. %CITE
 
-- Autres approches : partage du modèle lui-même.
+%- Autres approches : partage du modèle lui-même.
 
-- Pour l'édition temps-réel, on doit permettre d'appliquer des "filtres" (par exemple qui vont rajouter une sur-expression, etc)
+%- Pour l'édition temps-réel, on doit permettre d'appliquer des "filtres" (par exemple qui vont rajouter une sur-expression, etc)
 
 \section{Description de l'exécution}\label{sec.description}
 On sépare les objets offrant une structure temporelle, des objets possédant des données et commandes envoyées à d'autres logiciels (par exemple, une automation).
@@ -329,15 +330,14 @@ et ne s'exécute pas pour les autres.
 Ici les processus de contenu sont représentés par une boite barrée en diagonale, qui représente le cas courant d'une automation montante.
 % TODO pour devices, faire en sorte que les clients ne se connectent que à ceux qui sont en local ? Ou même mode "non connecté" (mais impossible de recevoir comme ça). Ou bien avoir une "map" d'addresse ip / port pour chaque paire client <-> device.
 
-\subsubsection{Comportements de groupes}
--> pourquoi ne pas avoir la même chose au niveau des mappings (et pour tout ce qui n'est pas fixé de manière générale ?)
-Deux manières : offrir un processus de mapping spécialisé qui permet de définir les relations qu'on veut dans un groupe ("first", "all", "mean", "sum", etc...)
+%\subsubsection{Comportements de groupes}
+%-> pourquoi ne pas avoir la même chose au niveau des mappings (et pour tout ce qui n'est pas fixé de manière générale ?)
+%Deux manières : offrir un processus de mapping spécialisé qui permet de définir les relations qu'on veut dans un groupe ("first", "all", "mean", "sum", etc...)
 
-Ou bien faire cette transformation à plus bas niveau (pour les devices) : les sorties sont constantes mais on peut appliquer des transformations aux entrées.
-Par exemple, si on possède un device spécial "network" avec l'arbre local de chaque "groupe", qui offre une couche d'abstraction au-dessus des méchanismes de consensus, on peut avoir des possibilités plus riches, telles que : l'expression $e_2$ est vraie si l'expression $e_1$ était vraie pour le groupe $B$ et fausse pour le groupe $A$.
+%Ou bien faire cette transformation à plus bas niveau (pour les devices) : les sorties sont constantes mais on peut appliquer des transformations aux entrées.
+%Par exemple, si on possède un device spécial "network" avec l'arbre local de chaque "groupe", qui offre une couche d'abstraction au-dessus des méchanismes de consensus, on peut avoir des possibilités plus riches, telles que : l'expression $e_2$ est vraie si l'expression $e_1$ était vraie pour le groupe $B$ et fausse pour le groupe $A$.
 
-Pour permettre plus de possibilités, on introduit la possibilité de réaliser des expressions qui réalisent un pattern-matching : 
-\lstinline|network:/*/trigger == true|.
+%Pour permettre plus de possibilités, on introduit la possibilité de réaliser des expressions qui réalisent un pattern-matching : \lstinline|network:/*/trigger == true|.
 
 \subsection{Processus Scénario}
 Le scénario est le processus central d'i-score : il met en relation les différents éléments temporels.
@@ -539,7 +539,7 @@ Le scénario~\ref{scenar.trigger-1} peut se résoudre de plusieurs manières.
 Comme mentionné précédemment, nous nous trouvons face à plusieurs cas 
 ou plusieurs clients doivent s'accorder sur le résultat d'une expression.
 
-Paxos, Raft sont des algorithmes permettant de garantir un consensus.%CITE 
+Paxos et ses variantes\cite{lamport1998part}, ainsi que Raft\cite{ongaro2014search} sont des algorithmes permettant de garantir un consensus sur une information dans un système distribué.
 % https://github.com/apache/kudu
 
 S'il y a synchronisation, on sépare la synchronisation du consensus, de la synchronisation de l'exécution qui suit la résolution de ce consensus : 
@@ -548,37 +548,23 @@ S'il y a synchronisation, on sépare la synchronisation du consensus, de la sync
     \item Une fois cette valeur connue, tous les nœuds précédant, suivant, et impliquant l'expression sont inclus dans la décision de la date d'exécution.
 \end{enumerate}
 
-Note : abstraire la notion de consensus au sein d'un groupe.
+%Note : abstraire la notion de consensus au sein d'un groupe.
 
 Cas avancé et non traité ici : si un scénario est exécuté en parallèle par toutes les machines, chaque groupe peut avoir un consensus différent sur chaque \trigger.
 On peut rajouter un niveau d'indirection. Le plus général : chaque objet peut être exécuté par N groupes pouvant posséder chacun M clients.
 Si un client est dans deux groupes, comment gérer le conflit ? bof.
 
-
-Cas synchrone : 
-* Sous-expression devient vraie
-* Expression fixe une date possible pour le réseau et notifie les autres puis se fixe au bon délai.
-
-Cas asynchrone : 
-* Sous-expression devient vraie
-* Expression envoie un message aux autres et se lance immédiatement.
-Il faut définir sur quelle machine l'expression est validée.
-
-- Cas de la borne max : \trigger, bof
-
-Pour l'instant : group leader ? ou bien tous se communiquent l'information et prennent la décision en fonction de cette information ?
+%Pour l'instant : group leader ? ou bien tous se communiquent l'information et prennent la décision en fonction de cette information ?
 
 
-\subsubsection{Cas particuliers}
-- Cas ou groupe est vide : afficher un warning à l'auteur car ce n'est peut-être pas désirable et significatif d'un problème matériel.
+%\subsubsection{Cas particuliers}
+%- Cas ou groupe est vide : afficher un warning à l'auteur car ce n'est peut-être pas désirable et significatif d'un problème matériel.
 
+%- Cas de groupes avec un seul participant.
 
-- Cas de groupes avec un seul participant.
-
-Si par exemple on dispose de deux clients exécutant des objets en série,
-la synchronisation peut être plus simple : on n'a pas besoin de l'étape de consensus.
-\subsection{Processus boucle}
-La notion de boucle a été introduite dans~\cite{celerier2016graphical}.
+%Si par exemple on dispose de deux clients exécutant des objets en série, la synchronisation peut être plus simple : on n'a pas besoin de l'étape de consensus.
+%\subsection{Processus boucle}
+%La notion de boucle a été introduite dans~\cite{celerier2016graphical}.
 
 \subsection{Récapitulatif}
 On choisit pour la répartition un modèle de document partagé : toutes les machines voient le même document, mais peuvent chacune en interpréter des sous-parties différemment à la discrétion du compositeur.
@@ -611,10 +597,10 @@ On décrit ici la sémantique des différentes méthodes de synchronisation vues
 On fait le choix de décrire ce modèle via la sémantique existante de i-score ; en effet, on dispose déjà de primitives de synchronisation et d'envoi de message.
 
 
-\subsection{Introduction de primitives réparties dans i-score}
-TODO voir politiques d'exécution de réseaux de Petri dans thèse AA
+%\subsection{Introduction de primitives réparties dans i-score}
+%TODO voir politiques d'exécution de réseaux de Petri dans thèse AA
 
-\subsubsection{Modélisation dans le cas non-interactif}
+\subsection{Cas non-interactif}
 Le premier cas étudié est celui du déplacement : deux contraintes $C_1$, $C_2$ se suivent, on veut que la première s'exécute sur les clients d'un groupe $A$, et que la seconde s'exécute sur les clients d'un groupe $B$.
 \begin{figure}[h]
     \centering
@@ -634,7 +620,7 @@ Dans le cas présenté par le scénario~\ref{scenar.simple}, on applique les tra
     Dès qu'une machine de $A$ arrivera à $M_1$, le message sera envoyé.
     \item Si on se trouve dans le cas précalculé~: la durée calculée sera celle de $C_{1\rightarrow2}$. Les machines du groupe $A$ et $B$ peuvent être déconnectées après le début de la lecture et continueront à fonctionner comme prévu.
 \end{enumerate}
-Quand il n'y a pas de point d'interaction, le cas synchrone n'offre pas d'avantages par rapport au cas précalculé.
+Quand il n'y a pas de point d'interaction, le cas simultané n'offre pas d'avantages par rapport au cas précalculé.
 
 \begin{figure}[h]
 \centering
@@ -655,18 +641,18 @@ Quand il n'y a pas de point d'interaction, le cas synchrone n'offre pas d'avanta
 \label{scenar.deplacement}
 \end{figure}
 
-- implémentation : on rajoute des délais dans les expressions.
+%- implémentation : on rajoute des délais dans les expressions.
 
-- Introduire la possibilité pour une expression de faire une comparaison avec le wall clock.
+%- Introduire la possibilité pour une expression de faire une comparaison avec le wall clock.
 
 
-Cas à traiter : 
-- Trigger
-- Duplication
-- Déplacement avec plusieurs scénarios (consensus ?) -> introduire un device virtuel qui règle le consensus
+%Cas à traiter : 
+%- Trigger
+%- Duplication
+%- Déplacement avec plusieurs scénarios (consensus ?) -> introduire un device virtuel qui règle le consensus
 
-\subsubsection{Modélisation dans le cas interactif}
-On reprend ici le scénario~\ref{scenar.trigger-1}, qui possède un \trigger, géré par le groupe B.
+\subsection{Cas interactif}
+On prend ici le scénario~\ref{scenar.depl-interactif}, qui possède un \trigger, géré par le groupe B.
  
 \begin{itemize}
 %	\item $T_e: A_\min \land D_\min$
@@ -674,22 +660,51 @@ On reprend ici le scénario~\ref{scenar.trigger-1}, qui possède un \trigger, g�
 	\item $T_A: M_A$, $T_D: M_D$, $T_C: M_C$
 \end{itemize}
 
-Dans le cas asynchrone: $M_A, M_D, M_C$ sont des messages qui vont déclencher les \trigger $T_A, T_D, T_C$ dès qu'ils sont reçus.
+Dans le cas asynchrone non-ordonné, $M_A, M_D, M_C$ sont des messages qui vont déclencher les \trigger $T_A, T_D, T_C$ dès qu'ils sont reçus.
 
-Cas asynchrone ordonné : les messages partent le plus tôt possible, mais $C$, $D$, ne peuvent se déclencher avant la fin de A.
+Dans le cas asynchrone ordonné : les messages partent le plus tôt possible, mais $C$, $D$, ne peuvent se déclencher avant la fin de $A$.
 
-Cas synchrone (est-ce le bon mot ?) : on essaye de faire en sorte que les choses s'arrêtent et démarre le plus proche possible.
-Le scénario est le même que dans le cas asynchrone. La différence est dans les messages qui sont envoyés : $M_A, M_D, M_C$ fixent la date à laquelle $T_A$, $T_D$, $T_C$ doivent partir.
+Dans le cas simultané, la structure est la même que dans le cas asynchrone non-ordonné. La différence est dans les messages qui sont envoyés : $M_A, M_D, M_C$ fixent la date à laquelle $T_A$, $T_D$, $T_C$ doivent partir.
 
-On notera qu'il est possible d'exprimer des variantes plus fines : par exemple synchroniser les fins mais pas les débuts. 
+On notera qu'il serait possible d'exprimer des variantes plus fines : par exemple rendre simultanés les fins de $A,D$ mais pas le début de $C$. 
 Néanmoins, ce travail a pour objectif de ne pas encombrer le compositeur d'une finesse trop peu souvent nécessaire, en lui offrant un accès facile à des concepts de haut-niveau dont la nécessité est apparue lors des études de cas.
-\subsection{Méchanismes de synchronisation}
-- Cas possibles : 
+
+\begin{figure}[h]
+	\centering
+		\begin{tikzpicture}
+		\input{scenarios/deplacement-interactif-source.tex}
+		\end{tikzpicture}
+		\caption{Un scénario possédant un \trigger que l'on veut répartir sur les clients des groupes $A,B,C,D$}
+	\label{scenar.depl-interactif}
+\end{figure}
+\begin{figure}[h]
+	\centering
+		\begin{tikzpicture}
+		\input{scenarios/deplacement-interactif-async.tex}
+		\draw (4.4, 31.95) node {$M_A, M_D, M_C$};
+		\end{tikzpicture}
+		\caption{Répartition du scénario (a) dans le cas asynchrone non-ordonné : les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $C$ s'arrêteront et démarreront sans ordre prévisible.}
+\end{figure}
+\begin{figure}[h]
+	\centering
+		\begin{tikzpicture}
+		\input{scenarios/deplacement-interactif-sync.tex}
+		\draw (4.8, 32) node {$M_A$}; 
+		
+		\draw (3.2, 30.6905) node {$M_D$}; 
+		\draw (3.2, 29.1594) node {$M_C$}; 
+		\end{tikzpicture}
+		\caption{Répartition du scénario (a) dans le cas asynchrone ordonné: les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $C$ s'arrêteront dans l'ordre, avec un délai potentiel entre la fin de $A,D$ et le début de $C$.}
+	
+\end{figure}
+\FloatBarrier
+%\subsection{Méchanismes de synchronisation}
+%- Cas possibles : 
 
 
-* Synchronisation de la fin
+%* Synchronisation de la fin
 
-* Synchronisation du début de la suite
+%* Synchronisation du début de la suite
 
 \section{Évaluation}\label{sec.evaluation}
 
@@ -699,50 +714,5 @@ Néanmoins, ce travail a pour objectif de ne pas encombrer le compositeur d'une 
 - Latence : prendre moyenne et écart-type sur les dix dernières valeurs ? Ou juste dernière valeur ?
 En LAN gigabit on est en général < à une milliseconde.
 
-
 \printbibliography 
-
-\newpage
-
-\section*{Annexe : politiques de répartition dans le cas interactif}
-
-\begin{figure}[h]
-	\centering
-	\begin{subfigure}{.5\linewidth}
-		\begin{tikzpicture}
-		\input{scenarios/deplacement-interactif-source.tex}
-		\end{tikzpicture}
-		\caption{Un scénario possédant un \trigger que l'on veut répartir sur les clients des groupes $A,B,C,D$}
-	\end{subfigure}
-\end{figure}
-
-\begin{figure}[h]
-	\centering
-	\ContinuedFloat
-	\begin{subfigure}{.5\linewidth}
-		\begin{tikzpicture}
-		\input{scenarios/deplacement-interactif-async.tex}
-		\draw (4.4, 31.95) node {$M_A, M_D, M_C$};
-		\end{tikzpicture}
-		\caption{Répartition du scénario (a) dans le cas asynchrone : les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $C$ s'arrêteront et démarreront sans ordre prévisible.}
-	\end{subfigure}
-\end{figure}
-
-
-\begin{figure}[h]
-	\centering
-	\ContinuedFloat
-	\begin{subfigure}{.5\linewidth}
-		\begin{tikzpicture}
-		\input{scenarios/deplacement-interactif-sync.tex}
-		\draw (4.8, 32) node {$M_A$}; 
-		
-		\draw (3.2, 30.6905) node {$M_D$}; 
-		\draw (3.2, 29.1594) node {$M_C$}; 
-		\end{tikzpicture}
-		\caption{Répartition du scénario (a) dans le cas asynchrone ordonné: les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $C$ s'arrêteront dans l'ordre, avec un délai potentiel entre la fin de $A,D$ et le début de $C$.}
-	\end{subfigure}
-	
-\end{figure}
-
 \end{document}
