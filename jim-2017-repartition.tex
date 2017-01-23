@@ -347,8 +347,12 @@ Plusieurs manières de répartir l'exécution d'un scénario, offrant différent
 On travaillera dans les examples suivants avec trois groupes $A,B,C$ disposant chacun d'un nombre inconnu de clients. 
 On pourra supposer que les contraintes temporelles portent chacune des processus de contenus, qui ne sont pas représentés ici afin de garder les figures simples.
 
+Dans la sémantique de i-score, le noeud temporel est l'objet permettant de synchroniser le début et la fin de plusieurs éléments. 
+Nous analysons d'abord les choix qui doivent être fait pour traduire ce mécanisme dans le cas réparti, puis étudions l'impact sur le processus scénario dans son ensemble en présentant les politiques de répartition de haut niveau.
 \subsubsection{Modes de synchronisation}
 Il est difficile d'offrir une synchronisation forte (par exemple avec une précision d'une milliseconde, dans un système réparti\cite{sheehy2015there}. Une contraainte additonnelle est le fonctionnement du système sur du matériel non-professionel, n'offrant donc pas le support de fonctionnalités telles que Ethernet synchrone ou PTP.
+
+NOTE : il faut changer les noms. Asynchrone / Simultané => Instantané / Précalculé et Ordonné / Non-ordonné => Synchrone / Asynchrone
 
 On identifie deux possibilités de synchronisation, manifestant leur utilité dans des cas différent : 
 \begin{itemize}
@@ -358,7 +362,7 @@ On identifie deux possibilités de synchronisation, manifestant leur utilité da
     Il convient de rappeler qu'il est physiquement impossible d'exécuter les objets avec la même précision temporelle que s'ils étaient exécutés dans un même tic d'horloge sur le même client: l'objectif est de minimiser les décalages temporels.
 \end{itemize}
 
-De plus, on considère les possibilités d'ordonnancement des évènements lors de la communication entre machine :
+De plus, on considère les possibilités d'ordonnancement des évènements lors de la communication entre clients :
 
 \begin{itemize}
     \item Mode ordonné : respecte la sémantique d'i-score~: les éléments s'exécutent dans le même ordre que si le scénario n'était pas réparti, au prix d'une latence augmentée en présence d'interactivité.
@@ -367,7 +371,7 @@ De plus, on considère les possibilités d'ordonnancement des évènements lors 
 
 De manière générale, on repose sur une bonne synchronisation des horloges au niveau du système.
 i-score est capable de compenser les délais si l'horloge système se resynchronise.
-Plus la synchronisation des horloges sera fine entre les clients et plus l'exécution se rapprochera de l'exécution dans le cas non réparti.
+Plus la synchronisation des horloges sera fine entre les clients et plus l'exécution se rapprochera de l'exécution théorique non répartie.
 
 Les différents modes de synchronisation vont impacter : 
 \begin{itemize}
@@ -482,7 +486,8 @@ En autorisant cela, on perd donc une certaine tolérance au partitionnement.
 \subsubsection{Expressions et interactivité}
 Dans le cas ou un scénario est exécuté intégralement en parallèle par différentes machines, il n'y a pas de problème : chacune vérifie les expressions en fonction des données dont elle dispose, et les valide à l'instant ou elle le souhaite. C'est utile si par exemple on veut avoir plusieurs téléphones qui font tous tourner un scénario semblable, mais chaque individu peut choisir de faire avancer le scénario au rythme ou il le souhaite.
 
-Dans le cas ou on a un partage de certaines lignes temporelles par certaines machines, le problème de la synchronisation des expressions se pose.
+Dans le cas ou on a un partage de certaines lignes temporelles par certaines machines, le problème de la synchronisation des expressions et de leurs dates d'évaluation se pose.
+
 
 \begin{itemize}
 	\item Prise de décision : s'il n'y a qu'une seule ligne temporelle, chaque expression doit n'avoir qu'une valeur de vérité. Il doit donc y avoir un consensus sur la valeur de cette expression. De même pour la vitesse d'exécution des éléments.
