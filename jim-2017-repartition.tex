@@ -69,8 +69,9 @@ Quarrè (fig.~\ref{img.quarre}) est une installation en son spatialisé réalis�
 Elle implique plusieurs participants possédant chacun un téléphone.
 
 Une trame principale d'environ trente minutes se déroule.
-Durant cette trame, à différents moments, des participants vont pouvoir interagir via l'application mobile, qui les avertis par un compte à rebours. 
+Durant cette trame, à différents moments, des participants vont pouvoir interagir via l'application mobile, qui les avertit par un compte à rebours. 
 Ils disposent ensuite d'une durée déterminée pour agir : changer un paramètre d'un effet, déclencher des sons, spatialiser un objet sonore\dots 
+Par exemple, de 1 minute 30 à 2 minutes, deux des participants vont pouvoir changer l'intensité d'un effet de chorus. 
 Les actions possibles varient en fonction du nombre de participants, pouvant aller de un à cinq.
 
 %- Cas des applis de téléphone : un objet qui s'exécute sur plusieurs machines en parallèle (dont on veut aggréger les résultats)
@@ -87,7 +88,7 @@ Actuellement, une des manières principales d'utiliser le logiciel i-score est d
 
 Néanmoins, sur des périphériques embarqués, cela a un coût : 
 \begin{itemize}
-    \item Encombrement de la bande passante : certains périphériques ne sont pas en Gigabit Ethernet; envoyer des quantités importantes de messages OSC sur des intervalles de quelques millisecondes va entraîner des pertes de paquets, des retards et l'augmentation du temps de latence.
+    \item Encombrement de la bande passante : certains périphériques ne sont pas en Gigabit Ethernet; envoyer des quantités importantes de messages OSC sur des intervalles de quelques millisecondes va entraîner des pertes de paquets, des retards, et une augmentation de la latence.
     \item Gigue\footnote{De l'anglais \textit{jitter}} sur les messages envoyés qui peut entraîner des effets indésirables comme des tremblements si par exemple on fait se déplacer des objets graphiques par réseau.
     \item Consommation de ressources pour le décodage des messages réseaux.
 \end{itemize}
@@ -110,19 +111,6 @@ La machine prenant le relai doit donc avoir été maintenue en synchronisation a
 %- Approche alternative avec application mobile.
 
 \subsection{État de l'art}
-\subsubsection{Rappel du modèle d'i-score}
-Ce document présente la problématique de répartition dans le cadre du logiciel i-score, qui implémente le modèle OSSIA\cite{celerier2015ossia}.
-Il consiste en un agencement d'éléments permettant de définir des comportements temporels. 
-Les éléments dont nous avons besoin ici sont : 
-\begin{itemize}
-    \item \vocab{Contrainte temporelle} : décrit un écoulement de temps. Représenté par un trait horizontal.
-    \item \vocab{Nœud temporel} : synchronise le début et la fin de plusieurs contraintes temporelles. Représenté par un trait vertical.
-    Peut porter un \vocab{point d'interaction}, qui décrit l'attente et la résolution d'une condition externe pour stopper les contraintes précédentes et démarrer les suivantes; les contraintes précédentes seront alors en partie représentées par des pointillés pour exprimer l'incertitude.
-    \item \vocab{Processus} : contenu dans les contraintes temporelles, permet l'exécution d'un comportement à chaque tic d'horloge. Par exemple, une automation.
-    \item \vocab{État} : permet d'envoyer un message à un temps donné. Représenté par un point.
-\end{itemize}
-Des exemples sont visibles en section~\ref{sec.description}, par exemple les scénarios~\ref{scenar.hierarchy} et~\ref{scenar.general}.
-%\subsubsection{Répartition à l'édition}
 \subsubsection{Musique répartie}
 On trouve plusieurs familles de logiciels et outils orientés réseau pour la production musicale.
 On distingue notamment les applications ayant pour but de synchroniser des 
@@ -226,10 +214,10 @@ On souhaite modifier le moins possible le modèle pour les utilisateurs du logic
 en rajoutant les notions nécessaires et suffisantes pour offrir la finesse de répartition désirée.
 
 La section~\ref{sec.description} présente de manière détaillée les possibilités 
-de répartition que l'on offre, en prenant example sur des cas simples.
+de répartition que l'on offre, en prenant exemple sur des cas simples.
 
 La section~\ref{sec.semantique} définit ces possibilités en utilisant les objets du modèle d'i-score. 
-On notera que cette méthode serait prohibitoire à réaliser manuellement~: c'est un modèle pour réaliser l'implémentation, qui se fait automatiquement à partir de la spécification que donne le compositeur via les outils présentés en section~\ref{sec.description}. 
+On notera que cette méthode serait prohibitive à réaliser manuellement~: c'est un modèle pour réaliser l'implémentation, qui se fait automatiquement à partir de la spécification que donne le compositeur via les outils présentés en section~\ref{sec.description}. 
 On prendra donc garde à ne pas confondre la forme de répartition qui existe déjà de fait dans le logiciel, l'objectif premier d'i-score étant de communiquer avec d'autres logiciels, de la répartition entre instances d'i-score partageant un même document.
 
 Enfin, la section~\ref{sec.evaluation} présente une évaluation des performances dans le cadre 
@@ -249,19 +237,33 @@ d'une implémentation pratique.
 
 %Détailler les implications des choix par rapport au théorême CAP et PACELT.
 
+\subsection{Rappel du modèle d'i-score}
+Ce document présente la problématique de répartition dans le cadre du logiciel i-score, qui implémente le modèle OSSIA\cite{celerier2015ossia}.
+Il consiste en un agencement d'éléments permettant de définir des comportements temporels. 
+Les éléments dont nous avons besoin ici sont : 
+\begin{itemize}
+	\item \vocab{Contrainte temporelle} : décrit un écoulement de temps. Représenté par un trait horizontal.
+	\item \vocab{Nœud temporel} : synchronise le début et la fin de plusieurs contraintes temporelles. Représenté par un trait vertical.
+	Peut porter un \vocab{point d'interaction}, qui décrit l'attente et la résolution d'une condition externe pour stopper les contraintes précédentes et démarrer les suivantes; les contraintes précédentes seront alors en partie représentées par des pointillés pour exprimer l'incertitude.
+	\item \vocab{Processus} : contenu dans les contraintes temporelles, permet l'exécution d'un comportement à chaque tic d'horloge. Par exemple, une automation.
+	\item \vocab{État} : permet d'envoyer un message à un temps donné. Représenté par un point.
+\end{itemize}
+Des exemples sont visibles en section~\ref{sec.description}, par exemple les scénarios~\ref{scenar.hierarchy} et~\ref{scenar.general}.
+%\subsubsection{Répartition à l'édition}
+
 \subsection{Nouvelles notions}
 Nous nous trouvons en présence de plusieurs machines qui communiquent et partagent un document.
 L'ensemble constitué par les instances d'i-score et le document qu'elles partagent est appelé \vocab{session}.
 
-On désigne par \vocab{client} une instance d'i-score connectée à une session.
+On désigne par \vocab{client} une instance d'i-score connectée à une session, qui peut être sur une machine différente.
 
-On désire s'affranchir des notions propres aux machines physiques et des problématiques de réseau (addresse IP, etc) lors de l'écriture 
+On désire s'affranchir des notions propres aux machines physiques et des problématiques de réseau (adresse IP, etc) lors de l'écriture 
 d'un scénario réparti. 
 
 Pour ce faire, on introduit la notion de \vocab{groupe}. 
 Un groupe est un ensemble de clients.
 
-Les compositeurs ne manipulent jamais directement la notion de client, uniquement celle d'un groupe qui peut contenir zéro, un, ou plusieurs clients.
+Les compositeurs ne manipulent jamais directement les informations relatives à un client, uniquement celle d'un groupe qui peut contenir zéro, un, ou plusieurs clients.
 
 De manière générale, quand plusieurs clients font partie d'un même groupe, cela signifie qu'ils vont réaliser les mêmes tâches, à des degrés de synchronisation variables.
 
@@ -281,8 +283,7 @@ sans avoir besoin de mettre à jour le scénario.
 \subsection{Topologie}
 Maître-esclave pour l'édition.
 
-Pour des raisons de simplicité, la première mise en œuvre se fait via une topologie réseau en étoile : un maître gère 
-le déroulement général de l'exécution. 
+Pour des raisons de simplicité, la première mise en œuvre se fait via une topologie réseau en étoile : un maître gère le déroulement général de l'exécution. 
 Les différents clients communiquent au travers de ce maître, avec les avantages et inconvénients que cela implique : 
 \begin{itemize}
 	\item Facilité d'analyse lors du développement : on peut enregistrer tous les messages échangés avec leurs estampilles.
@@ -306,7 +307,7 @@ Cela ne pose pas de problème de mémoire, même sur de l'embarqué tel que Rasp
 
 On utilise le protocole TCP pour tous les messages relatifs à la répartition, notamment pour ses garanties d'ordonnancement.
 
-On suppose ici que les horloges des machines sont synchronisées, au moins via NTP.
+% On suppose ici que les horloges des machines sont synchronisées, au moins via NTP.
 %\subsection{Répartition de l'édition}
 %- Partage de file undo - redo. Transformations opérationnelles. %CITE
 
@@ -318,11 +319,12 @@ On suppose ici que les horloges des machines sont synchronisées, au moins via N
 On sépare les objets offrant une structure temporelle, des objets possédant des données et commandes envoyées à d'autres logiciels (par exemple, une automation).
 
 Des groupes et des méthodes de synchronisation sont assignées à ces objets par le compositeur; en pratique, ces informations sont enregistrées comme une liste de méta-données associées aux objets.
-Il est possible d'assigner plusieurs groupes à un objet; cela se comporte comme un groupe constitué de la somme des clients de chaque groupe était assigné.
+% Il est possible d'assigner plusieurs groupes à un objet; cela se comporte comme un groupe constitué de la somme des clients de chaque groupe était assigné.
 
 % *** est-ce que ce n'est pas plus intéressant d'essayer de spécifier le cas ou on a plusieurs groupes sur plusieurs objets ? 
 \subsection{Processus de contenu}
-On entend par processus de contenu, tous les processus produisant des données, sans se soucier de la structuration temporelle. En voici une liste non exhaustive : automation, mapping, code javascript, piano roll MIDI, audio\dots
+On entend par processus de contenu, tous les processus produisant des données, sans se soucier de la structure temporelle. 
+En voici une liste non exhaustive : automation, mapping, code javascript, piano-roll MIDI, audio\dots
 
 Le processus s'exécute tel quel pour tous les clients auquel il est assigné, 
 et ne s'exécute pas pour les autres.
@@ -330,47 +332,46 @@ et ne s'exécute pas pour les autres.
 Ici les processus de contenu sont représentés par une boite barrée en diagonale, qui représente le cas courant d'une automation montante.
 % TODO pour devices, faire en sorte que les clients ne se connectent que à ceux qui sont en local ? Ou même mode "non connecté" (mais impossible de recevoir comme ça). Ou bien avoir une "map" d'addresse ip / port pour chaque paire client <-> device.
 
-%\subsubsection{Comportements de groupes}
-%-> pourquoi ne pas avoir la même chose au niveau des mappings (et pour tout ce qui n'est pas fixé de manière générale ?)
-%Deux manières : offrir un processus de mapping spécialisé qui permet de définir les relations qu'on veut dans un groupe ("first", "all", "mean", "sum", etc...)
-
-%Ou bien faire cette transformation à plus bas niveau (pour les devices) : les sorties sont constantes mais on peut appliquer des transformations aux entrées.
-%Par exemple, si on possède un device spécial "network" avec l'arbre local de chaque "groupe", qui offre une couche d'abstraction au-dessus des méchanismes de consensus, on peut avoir des possibilités plus riches, telles que : l'expression $e_2$ est vraie si l'expression $e_1$ était vraie pour le groupe $B$ et fausse pour le groupe $A$.
-
-%Pour permettre plus de possibilités, on introduit la possibilité de réaliser des expressions qui réalisent un pattern-matching : \lstinline|network:/*/trigger == true|.
-
 \subsection{Processus Scénario}
 Le scénario est le processus central d'i-score : il met en relation les différents éléments temporels.
 
 Plusieurs manières de répartir l'exécution d'un scénario, offrant différentes possibilités d'écriture, sont détaillées ci-dessous. On sépare le cas général permettant l'interactivité dans un scénario (le scénario continue après qu'un évènement externe $e$ se soit déclenché, visible par exemple en scénario~\ref{scenar.general}) du cas plus simple ou les dates sont fixées, visible en scénario~\ref{scenar.non-interactif}.
 
-On travaillera dans les examples suivants avec trois groupes $A,B,C$ disposant chacun d'un nombre inconnu de clients. 
+On travaillera dans les exemples suivants avec trois groupes $A,B,C$ disposant chacun d'un nombre inconnu de clients. 
 On pourra supposer que les contraintes temporelles portent chacune des processus de contenus, qui ne sont pas représentés ici afin de garder les figures simples.
+Pour simplifier les schémas, on associe par métonymie les contraintes avec les groupes auxquels ils sont associés.
 
-Dans la sémantique de i-score, le noeud temporel est l'objet permettant de synchroniser le début et la fin de plusieurs éléments. 
+Dans la sémantique de i-score, le nœud temporel est l'objet permettant de synchroniser le début et la fin de plusieurs éléments. 
 Nous analysons d'abord les choix qui doivent être fait pour traduire ce mécanisme dans le cas réparti, puis étudions l'impact sur le processus scénario dans son ensemble en présentant les politiques de répartition de haut niveau.
 \subsubsection{Modes de synchronisation}
-Il est difficile d'offrir une synchronisation forte (par exemple avec une précision d'une milliseconde, dans un système réparti\cite{sheehy2015there}. Une contraainte additonnelle est le fonctionnement du système sur du matériel non-professionel, n'offrant donc pas le support de fonctionnalités telles que Ethernet synchrone ou PTP.
+Il est difficile d'offrir une synchronisation forte (par exemple avec une précision d'une milliseconde, dans un système réparti\cite{sheehy2015there}. Une contrainte additionnelle est le fonctionnement du système sur du matériel non-professionnel, n'offrant donc pas le support de fonctionnalités telles que Ethernet synchrone ou PTP.
 
-NOTE : il faut changer les noms. Asynchrone / Simultané => Instantané / Précalculé et Ordonné / Non-ordonné => Synchrone / Asynchrone
+%NOTE : il faut changer les noms. Asynchrone / Simultané => Instantané / Précalculé et Ordonné / Non-ordonné => Synchrone / Asynchrone
 
 On identifie deux possibilités de synchronisation, manifestant leur utilité dans des cas différent : 
 \begin{itemize}
-    \item Asynchrone : lorsqu'une information interactive est disponible dans le système (par exemple «une expression se vérifie»), elle est propagée le plus vite possible aux autres noeuds qui doivent appliquer le résultat de cette information. Ce mode ne respecte pas nécessairement la sémantique avant-après de i-score mais permet de réduire la latence.
-    \item Simultané : lorsqu'une information est disponible dans le système, elle est propagée de manière à ce que la date absolue de réalisation soit la même (pour un observateur externe) pour tous les clients. 
-    C'est utile notamment dans le cas non-interactif : dès qu'une date peut être fixée, elle l'est, et les clients n'attendent pas de message annonçant la fin. 
-    Il convient de rappeler qu'il est physiquement impossible d'exécuter les objets avec la même précision temporelle que s'ils étaient exécutés dans un même tic d'horloge sur le même client: l'objectif est de minimiser les décalages temporels.
+	\item Mode synchrone : respecte la sémantique d'i-score~: les éléments s'exécutent dans le même ordre que si le scénario n'était pas réparti, au prix d'une latence augmentée en présence d'interactivité.
+	\item Mode asynchrone : ne respecte pas la sémantique d'i-score~: une exécution d'un objet peut terminer après que l'exécution de l'objet suivant ait commencé. En revanche, la latence est diminuée.    
 \end{itemize}
 
-De plus, on considère les possibilités d'ordonnancement des évènements lors de la communication entre clients :
+De plus, on considère la manière dont l'information se propage dans le système :
 
 \begin{itemize}
-    \item Mode ordonné : respecte la sémantique d'i-score~: les éléments s'exécutent dans le même ordre que si le scénario n'était pas réparti, au prix d'une latence augmentée en présence d'interactivité.
-    \item Mode non-ordonné : ne respecte pas la sémantique d'i-score~: une exécution d'un objet peut terminer après que l'exécution de l'objet suivant ait commencé. En revanche, la latence est diminuée.    
+	\item Instantanée : lorsqu'une information interactive est disponible dans le système (par exemple «une expression se vérifie»), elle est propagée le plus vite possible aux autres clients qui doivent appliquer le résultat de cette information. Ce mode permet de réduire la latence, au prix de décalages plus importants entre différentes machines.
+	\item Précalculée : lorsqu'une information est disponible dans le système, elle est propagée de manière à ce que la date absolue de réalisation soit la même (pour un observateur externe) pour tous les clients. 
+	On prend en compte pour ce faire les horloges et la latence relative de chaque client.
+	C'est utile notamment dans le cas non-interactif : dès qu'une date peut être fixée, elle l'est, et les clients n'attendent pas de message annonçant la fin. 
+	Il convient de rappeler qu'il est physiquement impossible d'exécuter les objets avec la même précision temporelle que s'ils étaient exécutés dans un même tic d'horloge sur le même client: l'objectif est de minimiser les décalages temporels.
 \end{itemize}
 
+Les quatres modes possibles permettent de faire des choix à l'écriture en fonction des besoins en terme de consistance et de latence.
+
+Notamment, le mode asynchrone instantané va offrir les plus basses latences au détriment de l'ordre d'exécution des objets.
+Inversement, le mode synchrone précalculé permet d'offrir une synchronisation forte qui peut être utile pour des processus média. 
+On aurait par exemple tendance à choisir ce mode pour démarrer des lectures de vidéo synchronisées sur plusieurs machines.
+
 De manière générale, on repose sur une bonne synchronisation des horloges au niveau du système.
-i-score est capable de compenser les délais si l'horloge système se resynchronise.
+L'algorithme d'exécution d'i-score compense en effet les délais à chaque tic si l'horloge système se resynchronise.
 Plus la synchronisation des horloges sera fine entre les clients et plus l'exécution se rapprochera de l'exécution théorique non répartie.
 
 Les différents modes de synchronisation vont impacter : 
@@ -440,7 +441,7 @@ Trois niveaux de partage :
     La différence avec le cas «partage complet» tient dans le fait que seuls les clients appartenant au groupe $A$ vont exécuter la contrainte $A$, sans avoir l'obligation de se synchroniser entre eux. 
     L'important est qu'une synchronisation ait lieu pour tous les clients appartenant à $A$ et $B$ lors du dernier \trigger.
     
-    Là encore, en raison de possibilités d'exécutions divergentes du même contenu, il est impossible d'offrir une répartition hiérarchique.
+    Là encore, en raison de possibilités d'exécutions divergentes du même contenu, il est impossible d'offrir une répartition hiérarchique cohérente.
     
     \begin{figure}[h]
         \centering
@@ -450,6 +451,8 @@ Trois niveaux de partage :
         \captionof{scenario}{Deux branches exécutées chacunes par un groupe différent.}
         \label{scenar.twobranches}
     \end{figure}
+
+    \item Il serait possible d'imaginer une variante au cas mixte : on pourrait synchroniser chaque branche partagée, mais ne pas synchroniser les branches entre elles.
     
 \end{itemize}
 
@@ -457,18 +460,15 @@ Trois niveaux de partage :
 
 \subsubsection{Cas non-interactif}
 % Cas principalement développé dans rapport de master
-On peut utiliser les méthodes de synchronisation décrites précédemment, mais une possibilité s'ajoute : 
+On peut utiliser les méthodes de synchronisation décrites précédemment, mais il est possible d'étendre le mode pré-calculé : 
 
 Comme on connait les dates effectives auxquelles les objets sont sensés s'exécuter, on peut les fixer à l'avance sur chaque machine. 
 Un parcours de graphe permet d'obtenir une estimation des dates minimales auxquelles il est possible de fixer des dates d'exécutions des éléments suivant un point d'interaction donné.
-Le même mécanisme a été utilisé dans~\cite{celerier2016rethinking} pour spécifier les dates d'exécution et de fin de flux audios.
-
-
-\begin{itemize}
-\item Avantage : s'il y a une déconnexion, l'exécution va continuer à fonctionner au moins jusqu'au prochain \trigger.
-\item Inconvénient : il suffit d'un peu de délai pour que le début de B survienne avant la fin de A. 
+% Le même mécanisme a été utilisé dans~\cite{celerier2016rethinking} pour spécifier les dates d'exécution et de fin de flux audios.
+Ce principe de pré-calcul permet d'offrir dans une certaine mesure une tolérance au partitionnement :  s'il y a une déconnexion, l'exécution va continuer à fonctionner au moins jusqu'au prochain \trigger. 
+Cela peut laisser du temps à un régisseur pour régler le problème.
+En revanche, puisqu'il n'y a pas d'ordonnancement au moment des points d'interaction, il suffit d'un peu de délai pour que, dans le scénario~\ref{scenar.non-interactif,}, le début de l'exécution sur $B$ survienne avant la fin de l'exécution sur $A$. 
 Il est donc particulièrement important dans ce cas de garder les horloges des machines synchronisées.
-\end{itemize}
 
 On notera que modifier la vitesse d'exécution des éléments en temps réel implique de mettre à jour les estimations de dates sur toutes les autres machines. 
 En autorisant cela, on perd donc une certaine tolérance au partitionnement.
@@ -478,7 +478,7 @@ En autorisant cela, on perd donc une certaine tolérance au partitionnement.
 	\begin{tikzpicture}
 	\input{scenarios/non-interactif.tex}
 	\end{tikzpicture}
-	\captionof{scenario}{Les groupes A, B, C exécutent des contraintes temporelles à la suite les uns des autres}
+	\captionof{scenario}{Les groupes A, B, C exécutent des contraintes temporelles pouvant contenir des processus les uns à la suite des autres}
 	\label{scenar.non-interactif}
 \end{figure}
 
@@ -529,11 +529,11 @@ Ordonnancement : par estampilles.
 Le scénario~\ref{scenar.trigger-1} peut se résoudre de plusieurs manières.
 
 \begin{itemize}
-    \item Si l'exécution du noeud est résolue de manière asynchrone, toutes les machines de $B$ envoient l'information de déclenchement à toutes les machines de $A$ et $C$, sans garantie d'ordre. Les \triggers se déclenchent immédiatement.
+    \item Si l'exécution du nœud est résolue de manière asynchrone, toutes les machines de $B$ envoient l'information de déclenchement à toutes les machines de $A$ et $C$, sans garantie d'ordre. Les \triggers se déclenchent immédiatement.
     
     Note : si on veut garantir un ordre, ne peut-on pas faire : $C$ stoppe $A$ qui démarre $B$ ? Ou bien si la borne max est atteinte, $A$ stoppe $C$ et déclenche $B$.
     
-    \item Si l'exécution du noeud est résolue de manière synchrone : 
+    \item Si l'exécution du nœud est résolue de manière synchrone : 
     \begin{itemize}
         \item Si la condition devient vraie, par consensus. On choisit une date, et on fixe l'arrêt des machines de $A$ et le départ des machines de $B$ par rapport à cette date, calculée en fonction des latences relatives. Potentiellement introduire un tick d'écart entre la fin de $A$ et le démarrage de $B$ ?
         \item Si on atteint la borne max : une machine est nécessairement la première à atteindre cette borne.
@@ -544,10 +544,10 @@ Le scénario~\ref{scenar.trigger-1} peut se résoudre de plusieurs manières.
 Comme mentionné précédemment, nous nous trouvons face à plusieurs cas 
 ou plusieurs clients doivent s'accorder sur le résultat d'une expression.
 
-Paxos et ses variantes\cite{lamport1998part}, ainsi que Raft\cite{ongaro2014search} sont des algorithmes permettant de garantir un consensus sur une information dans un système distribué.
+Paxos et ses variantes\cite{lamport1998part}, ainsi que Raft\cite{ongaro2014search} sont des algorithmes permettant de garantir un consensus sur une information dans un système réparti. 
 % https://github.com/apache/kudu
 
-S'il y a synchronisation, on sépare la synchronisation du consensus, de la synchronisation de l'exécution qui suit la résolution de ce consensus : 
+On sépare la synchronisation du consensus du mécanisme d'exécution qui suit la résolution de ce consensus : 
 \begin{enumerate}
     \item Les nœuds impliqués dans l'expression décident de la valeur de vérité.
     \item Une fois cette valeur connue, tous les nœuds précédant, suivant, et impliquant l'expression sont inclus dans la décision de la date d'exécution.
@@ -555,9 +555,9 @@ S'il y a synchronisation, on sépare la synchronisation du consensus, de la sync
 
 %Note : abstraire la notion de consensus au sein d'un groupe.
 
-Cas avancé et non traité ici : si un scénario est exécuté en parallèle par toutes les machines, chaque groupe peut avoir un consensus différent sur chaque \trigger.
-On peut rajouter un niveau d'indirection. Le plus général : chaque objet peut être exécuté par N groupes pouvant posséder chacun M clients.
-Si un client est dans deux groupes, comment gérer le conflit ? bof.
+%Cas avancé et non traité ici : si un scénario est exécuté en parallèle par toutes les machines, chaque groupe peut avoir un consensus différent sur chaque \trigger.
+%On peut rajouter un niveau d'indirection. Le plus général : chaque objet peut être exécuté par N groupes pouvant posséder chacun M clients.
+%Si un client est dans deux groupes, comment gérer le conflit ? bof.
 
 %Pour l'instant : group leader ? ou bien tous se communiquent l'information et prennent la décision en fonction de cette information ?
 
@@ -606,7 +606,9 @@ On fait le choix de décrire ce modèle via la sémantique existante de i-score 
 %TODO voir politiques d'exécution de réseaux de Petri dans thèse AA
 
 \subsection{Cas non-interactif}
-Le premier cas étudié est celui du déplacement : deux contraintes $C_1$, $C_2$ se suivent, on veut que la première s'exécute sur les clients d'un groupe $A$, et que la seconde s'exécute sur les clients d'un groupe $B$.
+Le premier cas, visible dans le scénario~\ref{scenar.simple} est celui du déplacement.
+Deux contraintes $C_1$, $C_2$ se suivent. 
+On veut que la première s'exécute sur les clients d'un groupe $A$, et que la seconde s'exécute sur les clients d'un groupe $B$. 
 \begin{figure}[h]
     \centering
     \begin{tikzpicture}
@@ -614,16 +616,14 @@ Le premier cas étudié est celui du déplacement : deux contraintes $C_1$, $C_2
     \end{tikzpicture}
     \captionof{scenario}{Deux contraintes temporelles se suivent}
     \label{scenar.simple}
-\end{figure}
-
-Dans le cas présenté par le scénario~\ref{scenar.simple}, on applique les transformations suivantes~: 
+\end{figure} on applique les transformations suivantes~: 
 \begin{enumerate}
     \item On crée une bifurcation au niveau du premier \timenode, avant $C_1$.
     \item On introduit une contrainte temporelle $C_{1\rightarrow2}$.
     \item On déplace $C_2$ à la suite de cette contrainte temporelle.
-    \item Si on se trouve dans le cas asynchrone~: on crée un message $M_1$ qui ira déclencher $T_1$ et on rend $C_{1\rightarrow2}$ souple.
+    \item Si on se trouve dans le cas instantané~: on crée un message $M_1$ qui ira déclencher $T_1$ et on rend $C_{1\rightarrow2}$ souple.
     Dès qu'une machine de $A$ arrivera à $M_1$, le message sera envoyé.
-    \item Si on se trouve dans le cas précalculé~: la durée calculée sera celle de $C_{1\rightarrow2}$. Les machines du groupe $A$ et $B$ peuvent être déconnectées après le début de la lecture et continueront à fonctionner comme prévu.
+    \item Si on se trouve dans le cas pré-calculé~: la durée calculée sera celle de $C_{1\rightarrow2}$. Les machines du groupe $A$ et $B$ peuvent être déconnectées après le début de la lecture et continueront à fonctionner comme prévu.
 \end{enumerate}
 Quand il n'y a pas de point d'interaction, le cas simultané n'offre pas d'avantages par rapport au cas précalculé.
 
@@ -718,6 +718,17 @@ Néanmoins, ce travail a pour objectif de ne pas encombrer le compositeur d'une 
 
 - Latence : prendre moyenne et écart-type sur les dix dernières valeurs ? Ou juste dernière valeur ?
 En LAN gigabit on est en général < à une milliseconde.
+
+\section{Conclusion}
+% Ouverture : 
+%\subsubsection{Comportements de groupes}
+%-> pourquoi ne pas avoir la même chose au niveau des mappings (et pour tout ce qui n'est pas fixé de manière générale ?)
+%Deux manières : offrir un processus de mapping spécialisé qui permet de définir les relations qu'on veut dans un groupe ("first", "all", "mean", "sum", etc...)
+
+%Ou bien faire cette transformation à plus bas niveau (pour les devices) : les sorties sont constantes mais on peut appliquer des transformations aux entrées.
+%Par exemple, si on possède un device spécial "network" avec l'arbre local de chaque "groupe", qui offre une couche d'abstraction au-dessus des méchanismes de consensus, on peut avoir des possibilités plus riches, telles que : l'expression $e_2$ est vraie si l'expression $e_1$ était vraie pour le groupe $B$ et fausse pour le groupe $A$.
+
+%Pour permettre plus de possibilités, on introduit la possibilité de réaliser des expressions qui réalisent un pattern-matching : \lstinline|network:/*/trigger == true|.
 
 \printbibliography 
 \end{document}
