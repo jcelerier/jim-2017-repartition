@@ -329,6 +329,7 @@ Des groupes et des spécifications de synchronisation sont assignées à ces obj
 % Il est possible d'assigner plusieurs groupes à un objet; cela se comporte comme un groupe constitué de la somme des clients de chaque groupe était assigné.
 
 % *** est-ce que ce n'est pas plus intéressant d'essayer de spécifier le cas ou on a plusieurs groupes sur plusieurs objets ? 
+
 \subsection{Processus de contenu}
 On entend par processus de contenu, tous les processus produisant des données, sans se soucier de la structure temporelle. 
 En voici une liste non exhaustive : automation, mapping, code javascript, piano-roll MIDI, lecture de son\dots
@@ -356,7 +357,7 @@ Il est difficile d'offrir une synchronisation forte (par exemple avec une préci
 Une contrainte additionnelle que l'on s'impose est le fonctionnement du système sur du matériel grand public. 
 Ce matériel ne supportera pas toujours des fonctionnalités telles que Ethernet synchrone\cite{ferrant2008synchronous} ou PTP.
 
-%NOTE : il faut changer les noms. Asynchrone / Simultané => Instantané / Précalculé et Ordonné / Non-ordonné => Synchrone / Asynchrone
+%NOTE : il faut changer les noms. Asynchrone / Simultané => Instantané / Compensé et Ordonné / Non-ordonné => Synchrone / Asynchrone
 
 On identifie deux possibilités de synchronisation, manifestant leur utilité dans des cas différent : 
 \begin{itemize}
@@ -369,8 +370,8 @@ De plus, on considère la manière dont l'information se propage dans le systèm
 \begin{itemize}
 	\item Propagation instantanée : lorsqu'une information interactive est disponible dans le système (par exemple «une expression se vérifie»), elle est propagée le plus vite possible aux autres clients qui doivent appliquer le résultat de cette information. 
     Ce mode permet de réduire la latence, au prix de décalages plus importants entre différents clients.
-	\item Propagation précalculée : lorsqu'une information est disponible dans le système, elle est propagée de manière à ce que la date absolue de réalisation soit la même (pour un observateur externe) pour tous les clients. 
-	On prend en compte pour ce faire les horloges et la latence relative de chaque client.
+	\item Propagation compensée : lorsqu'une information est disponible dans le système, elle est propagée de manière à ce que la date absolue de réalisation soit la même (pour un observateur externe) pour tous les clients. 
+	On prend en compte pour ce faire les horloges et la latence relative de chaque client~; les dates fixées sont compensées par rapport à cette information.
 	C'est utile notamment dans le cas non-interactif : dès qu'une date peut être fixée, elle l'est, et les clients n'attendent pas de message annonçant la fin. 
 	Il convient de rappeler qu'il est physiquement impossible d'exécuter les objets avec la même précision temporelle que s'ils étaient exécutés dans un même tic d'horloge sur le même client~; l'objectif est de minimiser ces décalages temporels.
 \end{itemize}
@@ -378,7 +379,7 @@ De plus, on considère la manière dont l'information se propage dans le systèm
 Les quatres modes possibles permettent de faire des choix à l'écriture en fonction des besoins en terme de consistance et de latence.
 
 Notamment, le mode asynchrone instantané va offrir les plus basses latences au détriment de l'ordre d'exécution des objets.
-Inversement, le mode synchrone précalculé permet d'offrir une synchronisation forte qui peut être utile pour des processus média. 
+Inversement, le mode synchrone compensé permet d'offrir une synchronisation forte qui peut être utile pour des processus média. 
 On aurait par exemple tendance à choisir ce mode pour démarrer des lectures de vidéo synchronisées sur plusieurs machines.
 
 Les différents modes de synchronisation vont impacter : 
@@ -440,7 +441,10 @@ On dénote trois manières de partager l'information dans un scénario :
         \label{scenar.hierarchy}
     \end{figure}
     
-    \item Mixte : il peut y avoir plusieurs lignes temporelles appartenant à différents groupes dans un même scénario. Ces lignes peuvent ensuite se resynchroniser à un instant donné. 
+    \item Mixte : il peut y avoir plusieurs lignes temporelles appartenant à différents groupes dans un même scénario. 
+    Ces lignes peuvent ensuite se resynchroniser à un instant donné. 
+    
+    % TODO donner une définition de ligne temporelle
     
     Les annotations donnent l'emplacement d'exécution des contraintes, des processus, et de vérification des expressions. 
 %    Un client ne sait pas à l'avance si il va pouvoir se déclencher ou non. 
@@ -469,30 +473,32 @@ On dénote trois manières de partager l'information dans un scénario :
 
 \subsubsection{Cas non-interactif}
 % Cas principalement développé dans rapport de master
-On peut utiliser les méthodes de synchronisation décrites précédemment, mais il est possible d'étendre le mode pré-calculé : 
+On peut utiliser les méthodes de synchronisation décrites précédemment, mais il est possible d'étendre le mode compensé : 
 
-Comme on connait les dates effectives auxquelles les objets sont sensés s'exécuter, on peut les fixer à l'avance sur chaque client. 
-Un parcours de graphe permet d'obtenir une estimation des dates minimales auxquelles il est possible de fixer des dates d'exécutions des éléments suivant un point d'interaction donné.
+Comme on connait les dates effectives auxquelles les objets sont sensés s'exécuter, il est possible de les fixer à l'avance sur chaque client. 
+Un parcours de graphe permet d'obtenir une estimation des dates minimales auxquelles il sera possible de fixer des dates d'exécutions des éléments suivant un point d'interaction donné. 
+Cette méthode est notamment développée dans~\cite{celerier2016rethinking}.
 % Le même mécanisme a été utilisé dans~\cite{celerier2016rethinking} pour spécifier les dates d'exécution et de fin de flux audios.
-Ce principe de pré-calcul permet d'offrir dans une certaine mesure une tolérance au partitionnement :  s'il y a une déconnexion, l'exécution va continuer à fonctionner au moins jusqu'au prochain \trigger. 
+Ce principe de pré-calcul permet d'offrir dans une certaine mesure une tolérance au partitionnement : s'il y a une déconnexion, l'exécution va continuer à fonctionner au moins jusqu'au prochain \trigger.
 Cela peut laisser du temps à un régisseur pour régler le problème.
 En revanche, puisqu'il n'y a pas d'ordonnancement au moment des points d'interaction, il suffit d'un peu de délai pour que, dans le scénario~\ref{scenar.non-interactif}, le début de l'exécution sur $G_2$ survienne avant la fin de l'exécution sur $G_1$. 
 Il est donc particulièrement important dans ce cas de garder les horloges des machines synchronisées.
 
 On notera que modifier la vitesse d'exécution des éléments en temps réel implique de mettre à jour les estimations de dates sur tous les autres clients. 
-En autorisant cela, on perd donc cette certaine tolérance au partitionnement et la cohérence de l'exécution pourra être brisée.
+En autorisant cela, on perd donc aussi cette tolérance au partitionnement et la cohérence de l'exécution pourra être brisée.
 
 \begin{figure}[h]
 	\centering
 	\begin{tikzpicture}
 	\input{scenarios/non-interactif.tex}
 	\end{tikzpicture}
-	\captionof{scenario}{Les groupes A, B, C exécutent des contraintes temporelles pouvant contenir des processus les uns à la suite des autres}
+	\captionof{scenario}{Les groupes $G_1,G_2,G_3$ exécutent des contraintes temporelles pouvant contenir des processus les uns à la suite des autres}
 	\label{scenar.non-interactif}
 \end{figure}
 
 
 \subsubsection{Expressions et interactivité}
+\label{section.expr-interact}
 Dans le premier cas, ou un scénario est exécuté intégralement en parallèle par différents clients, il n'y a pas de situation particulière à gérer.
 Chaque client vérifie les expressions en fonction des données dont elle dispose, et les valide à l'instant ou elle le souhaite. 
 C'est utile si par exemple la partition implique plusieurs téléphones qui font tous tourner un scénario semblable, mais où chaque individu peut choisir de faire avancer le scénario au rythme ou il le souhaite.
@@ -501,7 +507,9 @@ Dans le cas d'un partage de certaines lignes temporelles par plusieurs clients, 
 Ce sont par exemple les expressions, leurs dates d'évaluation, et la vitesse d'exécution des contraintes temporelles.
 
 \begin{itemize}
-	\item Prise de décision : s'il n'y a qu'une seule ligne temporelle, chaque expression doit n'avoir qu'une valeur de vérité. Il doit donc y avoir un consensus sur la valeur de cette expression. De même pour la vitesse d'exécution des éléments.
+	\item S'il n'y a qu'une seule ligne temporelle, chaque expression doit n'avoir qu'une valeur de vérité. 
+    Il doit donc y avoir un consensus sur la valeur de cette expression. 
+    De même pour la vitesse d'exécution des contraintes temporelles.
     
     Plusieurs manières d'obtenir un consensus sont possibles : 
     \begin{itemize}
@@ -511,7 +519,7 @@ Ce sont par exemple les expressions, leurs dates d'évaluation, et la vitesse d'
         \item Tous les clients valident ou nient l'expression.
     \end{itemize}
 
-	\item On peut supposer que des sous-parties d'un scénario pourraient être exécutées entièrement par un client ou groupe.
+	\item Dans le cas mixte, la synchronisation doit alors uniquement se faire à l'entrée ou à la sortie d'une branche.
 \end{itemize}
 
 On note plusieurs problèmes possibles : 
@@ -526,7 +534,7 @@ On note plusieurs problèmes possibles :
         \item Choisir au hasard.
     \end{itemize}
 \end{itemize}
-Ordonnancement : par estampilles.
+% Ordonnancement : par estampilles.
 
 \begin{figure}[h]
     \centering
@@ -584,9 +592,15 @@ On sépare la synchronisation du consensus du mécanisme d'exécution qui suit l
 %Si par exemple on dispose de deux clients exécutant des objets en série, la synchronisation peut être plus simple : on n'a pas besoin de l'étape de consensus.
 %\subsection{Processus boucle}
 %La notion de boucle a été introduite dans~\cite{celerier2016graphical}.
+\subsection{Alternative : répartition bas niveau}
+Une approche possible mais non considérée dans ce travail serait de réaliser la synchronisation à chaque tic d'horloge, via un mécanisme d'asservissement maître-esclave.
 
+Le maître s'exécute avec une horloge physique.
+À chaque tic, il envoie à tous les clients la date à laquelle ils doivent exécuter leur propre tic. 
+Quand les clients reçoivent ce message, ils appliquent une attente active\footnote{\textit{busy wait}} jusqu'à ce que l'exécution du tic prenne place.
+% TODO faire quelques phrases sur une possible répartition bas-niveau asservie : dans ce cas, on a un maître qui 'tick' régulièrement ; les esclaves réagissent à ce tick en faisant un busy wait jusqu'à la date à laquelle ils doivent s'exécuter.
 \subsection{Récapitulatif}
-On choisit pour la répartition un modèle de document partagé : toutes les machines voient le même document, mais peuvent chacune en interpréter des sous-parties différemment à la discrétion du compositeur.
+On choisit pour la répartition un modèle de document partagé : touts les clients voient le même document, mais peuvent chacune en interpréter des sous-parties différemment à la discrétion du compositeur.
 
 On introduit une notion de client (potentiellement une machine physique) et de groupe.
 Un groupe peut contenir plusieurs clients, et un client peut être présent dans plusieurs groupes.
@@ -595,20 +609,21 @@ Différents objets du modèle d'i-score peuvent être assignés à un ou plusieu
 
 \begin{itemize}
 	\item Les processus
-	\item Les expressions
+	\item Les points d'interaction
 	\item Les contraintes temporelles
 \end{itemize}
 
-Donner un groupe à une contrainte temporelle propage ce groupe à tous ses processus enfants.
+Dans le cas des points d'interaction, plusieurs niveaux de synchronisation sont présentés.
 
-Pour le cas du processus scénario, la répartition peut avoir lieu de manière synchrone ou asynchrone, 
-avec ou sans partage d'informations entre clients.
+Donner un groupe à une contrainte temporelle propage ce groupe récursivement à tous ses processus enfants.
 
-On remarquera que le problème de la répartition peut se voir comme deux cas : 
-\begin{itemize}
-	\item Exécutions en parallèle (les éléments d'un même groupe).
-	\item Exécutions en série (les éléments d'un scénario qui se suivent).
-\end{itemize}
+Pour le cas du processus scénario, la répartition peut avoir lieu avec divers degrés de partage d'information entre les clients.
+
+%On remarquera que le problème de la répartition peut se voir comme deux cas : 
+%\begin{itemize}
+%	\item Exécutions en parallèle (les éléments d'un même groupe).
+%	\item Exécutions en série (les éléments d'un scénario qui se suivent).
+%\end{itemize}
 
 \section{Sémantique}\label{sec.semantique}
 On décrit ici la sémantique des différentes méthodes de synchronisation vues précédemment.
@@ -622,24 +637,45 @@ En effet, on dispose déjà par ce biais de méthodes de synchronisation et d'en
 \subsection{Cas non-interactif}
 Le premier cas, visible dans le scénario~\ref{scenar.simple} est celui du déplacement.
 Deux contraintes $C_1$, $C_2$ se suivent. 
-On veut que la première s'exécute sur les clients d'un groupe $G_1$, et que la seconde s'exécute sur les clients d'un groupe $G_2$. 
+On veut que la première s'exécute sur les clients d'un groupe $G_1$, puis que la seconde s'exécute sur les clients d'un groupe $G_2$. 
+Le basculement de $C_1$ à $C_2$ se fait à une date connue à l'avance : on n'attend pas d'interactions.
+
+%TODO bien préciser qu'est-ce qui s'exécute sur chaque machine.
 \begin{figure}[h]
     \centering
     \begin{tikzpicture}
     \input{scenarios/simple.tex}
     \end{tikzpicture}
-    \captionof{scenario}{Deux contraintes temporelles se suivent}
+    \captionof{scenario}{Deux contraintes temporelles se suivent sur deux groupes différents}
     \label{scenar.simple}
-\end{figure} on applique les transformations suivantes~: 
+\end{figure} 
+
+On applique les transformations suivantes~: 
 \begin{enumerate}
     \item On crée une bifurcation au niveau du premier \timenode, avant $C_1$.
     \item On introduit une contrainte temporelle $C_{1\rightarrow2}$.
     \item On déplace $C_2$ à la suite de cette contrainte temporelle.
-    \item Si on se trouve dans le cas instantané~: on crée un message $M_1$ qui ira déclencher $T_1$ et on rend $C_{1\rightarrow2}$ souple.
-    Dès qu'un client de $G_1$ arrivera à $M_1$, le message sera envoyé.
-    \item Si on se trouve dans le cas pré-calculé~: la durée calculée sera celle de $C_{1\rightarrow2}$. Les clients du groupe $G_1$ et $G_2$ peuvent être déconnectés après le début de la lecture et continueront à fonctionner comme prévu.
+    \item[4a.] Cas instantané asynchrone (fig.~\ref{depl.simple.async.instant}).
+    On crée un message $M_1$ à la fin de $C_1$ qui ira déclencher automatiquement $T_1$. 
+    Cela implique la souplesse de $C_{1\rightarrow2}$.
+    Ce message sera envoyé lorsqu'un consensus sur le groupe $G_1$ sera établi, avec une des politiques énoncées en section~\ref{section.expr-interact}.
+    %Dès qu'un client de $G_1$ arrivera à $M_1$, le message sera envoyé.
+    \item[4b.] Cas compensé synchrone (fig.~\ref{depl.simple.async.instant}).
+    % TODO comment compenser les fins de $C_1$ : mettre à jour une estimation en permanence ?
+    Lorsqu'un consensus est établi sur la date de fin de $C_1$, un message $M_1$ est envoyé aux clients de $G_2$ avec cette date, de manière à ce que leur exécution démarre en même temps que la fin de $C_1$.
+    \item[4c.] Cas compensé asynchrone (fig.~\ref{depl.simple.sync.comp}). 
+    Le message $M_1$ est envoyé au début de $C_1$ plutôt qu'à la fin.
+    Les clients du groupe $G_1$ et $G_2$ peuvent être déconnectés après le début de la lecture et continueront à fonctionner comme prévu.
 \end{enumerate}
-%TODO REVOIR ÇA Quand il n'y a pas de point d'interaction, le cas simultané n'offre pas d'avantages par rapport au cas précalculé.
+
+On remarquera trois choses : 
+\begin{itemize}
+    \item Puisqu'il n'y a pas d'expressions, le mode instantané synchrone n'apporte rien par rapport au mode instantané asynchrone.
+    En effet, le démarrage de $C_2$ implique dans tous les cas la fin de $C_1$, car ce sont les clients du groupe qui évaluent $C_1$ qui décident de la date d'exécution du nœud temporel les séparant, contrairement au cas ou une expression serait évaluée par un autre groupe que $G_1$ ou $G_2$.
+    \item Le cas compensé synchrone correspond à ce qu'il se passerait automatiquement si on disposait d'horloges parfaites.
+    \item Le cas compensé avec pré-calcul est incompatible avec une synchronisation forte : on suppose que la synchronisation se fera automatiquement via la synchronisation des horloges sous-jacentes.
+\end{itemize}
+%TODO REVOIR ÇA Quand il n'y a pas de point d'interaction, le cas simultané n'offre pas d'avantages par rapport au cas compensé.
 
 \begin{figure}[h]
 \centering
@@ -647,16 +683,18 @@ On veut que la première s'exécute sur les clients d'un groupe $G_1$, et que la
 \begin{tikzpicture}
 \input{scenarios/deplacement-simple.tex}
 \end{tikzpicture}
-\caption{Cas asynchrone non-ordonné}
+\caption{Cas instantané et compensé synchrone}
+\label{depl.simple.async.instant}
 \end{subfigure}
 
 \begin{subfigure}{.5\linewidth}
     \begin{tikzpicture}
     \input{scenarios/deplacement-precalcule.tex}
     \end{tikzpicture}
-    \caption{Cas simultané ordonné}
+    \caption{Cas compensé asynchrone, avec pré-calcul}
+    \label{depl.simple.sync.comp}
 \end{subfigure}
-\caption{Transformations pour l'exécution de deux contraintes en série sur deux machines séparées}
+\caption{Transformations pour l'exécution de deux contraintes en série sur deux clients séparées}
 \label{scenar.deplacement}
 \end{figure}
 
@@ -679,9 +717,9 @@ On prend ici le scénario~\ref{scenar.depl-interactif}, qui possède un \trigger
 	\item $T_A: M_A$, $T_D: M_D$, $T_C: M_C$
 \end{itemize}
 
-Dans le cas asynchrone non-ordonné, $M_A, M_D, M_C$ sont des messages qui vont déclencher les \trigger $T_A, T_D, T_C$ dès qu'ils sont reçus.
+Dans le cas asynchrone instantané, $M_A, M_D, M_C$ sont des messages qui vont déclencher les \trigger $T_A, T_D, T_C$ dès qu'ils sont reçus.
 
-Dans le cas asynchrone ordonné : les messages partent le plus tôt possible, mais $C$, $D$, ne peuvent se déclencher avant la fin de $A$.
+Dans le cas synchrone instantané : les messages partent le plus tôt possible, mais $C$, $D$, ne peuvent se déclencher avant la fin de $A$.
 
 Dans le cas simultané, la structure est la même que dans le cas asynchrone non-ordonné. La différence est dans les messages qui sont envoyés : $M_A, M_D, M_C$ fixent la date à laquelle $T_A$, $T_D$, $T_C$ doivent partir.
 
@@ -696,14 +734,16 @@ Néanmoins, ce travail a pour objectif de ne pas encombrer le compositeur d'une 
 		\caption{Un scénario possédant un \trigger que l'on veut répartir sur les clients des groupes $A,B,C,D$}
 	\label{scenar.depl-interactif}
 \end{figure}
+
 \begin{figure}[h]
 	\centering
 		\begin{tikzpicture}
 		\input{scenarios/deplacement-interactif-async.tex}
 		\draw (4.4, 31.95) node {$M_A, M_D, M_C$};
 		\end{tikzpicture}
-		\caption{Répartition du scénario (a) dans le cas asynchrone non-ordonné : les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $G_3$ s'arrêteront et démarreront sans ordre prévisible.}
+		\caption{Répartition du scénario \ref{scenar.depl-interactif} dans le cas asynchrone instantané : les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $G_3$ s'arrêteront et démarreront sans ordre prévisible.}
 \end{figure}
+
 \begin{figure}[h]
 	\centering
 		\begin{tikzpicture}
@@ -713,10 +753,8 @@ Néanmoins, ce travail a pour objectif de ne pas encombrer le compositeur d'une 
 		\draw (3.2, 30.6905) node {$M_D$}; 
 		\draw (3.2, 29.1594) node {$M_C$}; 
 		\end{tikzpicture}
-		\caption{Répartition du scénario (a) dans le cas asynchrone ordonné: les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $G_3$ s'arrêteront dans l'ordre, avec un délai potentiel entre la fin de $A,D$ et le début de $G_3$.}
-	
+		\caption{Répartition du scénario \ref{scenar.depl-interactif} dans le cas synchrone instantané: les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $G_3$ s'arrêteront dans l'ordre, avec un délai potentiel entre la fin de $A,D$ et le début de $G_3$.}
 \end{figure}
-\FloatBarrier
 %\subsection{Méchanismes de synchronisation}
 %- Cas possibles : 
 
