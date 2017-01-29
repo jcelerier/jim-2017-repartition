@@ -116,8 +116,8 @@ Néanmoins, sur des périphériques embarqués, cela a un coût :
     \item Consommation superflue de ressources pour le décodage des messages réseaux.
 \end{itemize}
 
-De plus, actuellement, il est nécessaire de copier les fichiers de sauvegarde sur le périphérique à chaque modification que l'on veut tester, ce qui est peu ergonomique. 
-On essaye donc par la même occasion d'offrir un système qui permette de partager automatiquement un scénario i-score entre deux machines.
+%De plus, actuellement, il est nécessaire de copier les fichiers de sauvegarde sur le périphérique à chaque modification que l'on veut tester, ce qui est peu ergonomique. 
+%Le système devra donc permettre de partager automatiquement un scénario entre deux machines.
 
 \subsection{Lecture de médias synchronisée}
 On désire offrir des possibilités de lecture vidéo permettant à 
@@ -280,10 +280,12 @@ Ce document présente la problématique de répartition dans le cadre du logicie
 Il consiste en un agencement d'éléments permettant de définir des comportements temporels. 
 Les éléments dont nous avons besoin ici sont : 
 \begin{itemize}
-	\item \vocab{Contrainte temporelle} : décrit un écoulement de temps. Représenté par un trait horizontal.
+	\item \vocab{Contrainte temporelle} : décrit un écoulement de temps. 
+    Représenté par un trait horizontal. 
 	\item \vocab{Nœud temporel} : synchronise le début et la fin de plusieurs contraintes temporelles. Représenté par un trait vertical.
-	Peut porter un \vocab{point d'interaction}, qui décrit l'attente et la résolution d'une condition externe pour stopper les contraintes précédentes et démarrer les suivantes; les contraintes précédentes seront alors en partie représentées par des pointillés pour exprimer l'incertitude.
-    Cette condition prend la forme d'une expression logique entre paramètres de la partition. Par exemple, 
+	Peut porter un \vocab{point d'interaction}, qui décrit l'attente et la résolution d'une condition externe pour stopper les contraintes précédentes et démarrer les suivantes; les contraintes précédentes seront alors en partie représentées par des pointillés pour exprimer l'incertitude sur leur date de fin. 
+    Cette incertitude peut être bornée par des dates d'exécution minimales et maximales.
+    La condition prend la forme d'une expression logique entre paramètres de la partition. Par exemple, 
     
     \lstinline|/couleur == "rouge" && /volume > 1| .
 	\item \vocab{Processus} : contenu dans les contraintes temporelles, permet l'exécution d'un comportement à chaque tic d'horloge. Par exemple, une automation.
@@ -293,7 +295,7 @@ Des exemples sont visibles en section~\ref{sec.description}, par exemple les sc�
 %\subsubsection{Répartition à l'édition}
 
 \subsection{Nouvelles notions}
-Nous nous trouvons en présence de plusieurs machines qui communiquent et partagent un document.
+Nous nous trouvons en présence de plusieurs ordinateurs qui communiquent et partagent un document.
 L'ensemble constitué par les instances d'i-score et le document qu'elles partagent est appelé \vocab{session}.
 
 On désigne par \vocab{client} une instance d'i-score connectée à une session, qui peut être sur une machine différente.
@@ -365,8 +367,9 @@ On identifie deux possibilités de synchronisation, manifestant leur utilité da
 De plus, on considère la manière dont l'information se propage dans le système :
 
 \begin{itemize}
-	\item Instantanée : lorsqu'une information interactive est disponible dans le système (par exemple «une expression se vérifie»), elle est propagée le plus vite possible aux autres clients qui doivent appliquer le résultat de cette information. Ce mode permet de réduire la latence, au prix de décalages plus importants entre différentes machines.
-	\item Précalculée : lorsqu'une information est disponible dans le système, elle est propagée de manière à ce que la date absolue de réalisation soit la même (pour un observateur externe) pour tous les clients. 
+	\item Propagation instantanée : lorsqu'une information interactive est disponible dans le système (par exemple «une expression se vérifie»), elle est propagée le plus vite possible aux autres clients qui doivent appliquer le résultat de cette information. 
+    Ce mode permet de réduire la latence, au prix de décalages plus importants entre différents clients.
+	\item Propagation précalculée : lorsqu'une information est disponible dans le système, elle est propagée de manière à ce que la date absolue de réalisation soit la même (pour un observateur externe) pour tous les clients. 
 	On prend en compte pour ce faire les horloges et la latence relative de chaque client.
 	C'est utile notamment dans le cas non-interactif : dès qu'une date peut être fixée, elle l'est, et les clients n'attendent pas de message annonçant la fin. 
 	Il convient de rappeler qu'il est physiquement impossible d'exécuter les objets avec la même précision temporelle que s'ils étaient exécutés dans un même tic d'horloge sur le même client~; l'objectif est de minimiser ces décalages temporels.
@@ -393,9 +396,30 @@ Les mécanismes de consensus possibles sont par la suite discutés en section~\r
 On dénote trois manières de partager l'information dans un scénario : 
 
 \begin{itemize}
+    \item Aucun partage : Les clients associés à ce processus l'exécutent tous de manière indépendante.
+    Les autres ne l'exécutent pas. 
+    Si par exemple on assigne le groupe $G_1$ au scénario~\ref{scenar.general}, tous les clients de $G_1$ vont exécuter toutes les contraintes temporelles et évaluer toutes les expressions, sans communiquer entre eux sur leurs résultats. 
+    Par exemple, pour deux clients de $G_1$, le \trigger pourra se déclencher à des instants différents, et la condition pourra avoir une valeur différente.
+    
+    Dans ce cas, les annotations de groupes assignés aux objets du scénario sont ignorés, récursivement. 
+    Puisque chaque exécution va avoir des temps d'exécution différents pour chaque point d'interaction, il ne peut pas y avoir de synchronisation.
+    La seule politique d'exécution qui pourrait faire sens serait que le premier client à valider un \trigger dans un scénario non partagé avertirait les clients suivants.
+    
+    Ce cas est notamment utile pour des sous-scénarios dont plusieurs participants à une installation artistique peuvent faire l'expérience en même temps, tout en gardant une trame générale de plus haut niveau. 
+    Typiquement, on peut imaginer ce cas pour une application mobile.
+    
+    \begin{figure}[h]
+        \centering
+        \begin{tikzpicture}
+        \input{scenarios/general.tex}
+        \end{tikzpicture}
+        \captionof{scenario}{Un scénario interactif avec des interactions et des conditions ; $G_{1\dots5}$ sont les groupes associés aux éléments du modèle. On suppose l'existence de processus de contenus dans chaque contrainte temporelle.}
+        \label{scenar.general}
+    \end{figure}
+    
     \item Partage complet : il n'y a qu'une seule ligne temporelle partagée pour tous les clients. 
     Les annotations de groupes indiquent l'emplacement d'exécution des processus de contenu et la liste des clients devant parvenir à un consensus pour une expression donnée. 
-    Si par exemple la vitesse d'exécution d'une contrainte est modifiée en temps réel, cette modification est répercutée sur tous les clients qui l'exécutent.
+    Si par exemple la vitesse d'exécution d'une contrainte est modifiée en temps réel, cette modification est répercutée sur tous les clients.
     
     Cela permet notamment de gérer la répartition d'objets à des niveaux hiérarchiques différents~: dans le scénario~\ref{scenar.hierarchy}, si le scénario racine est dans ce mode, alors on peut correctement faire exécuter les scénarios enfants en prenant en compte les groupes de leurs objets. 
     
@@ -416,25 +440,6 @@ On dénote trois manières de partager l'information dans un scénario :
         \label{scenar.hierarchy}
     \end{figure}
     
-    \item Aucun partage : les clients n'étant pas associées à ce processus ne l'exécutent pas, ceux qui y sont associées l'exécutent tous de manière indépendante.
-    Si par exemple on assigne le groupe $G_1$ au scénario~\ref{scenar.general}, tous les clients de $G_1$ vont exécuter tous les éléments, sans communiquer sur leurs résultats. 
-    Par exemple, pour deux clients de $G_1$, le \trigger pourra se déclencher à des instants différents, et la condition pourra avoir une valeur différente.
-    
-    Cela implique que les annotations de groupes assignés aux objets du scénario sont ignorés, récursivement : puisque chaque exécution va avoir des temps différents par conception, il ne peut pas vraiment y avoir de synchronisation.
-    La seule politique d'exécution qui pourrait faire sens serait que le premier client à valider un \trigger dans un scénario non partagé avertirait les clients suivants.
-    
-    Ce cas est notamment utile pour avoir des sous-scénarios dont plusieurs participants à une installation artistique peuvent faire l'expérience en même temps, tout en gardant une trame générale de plus haut niveau. 
-    Typiquement, on peut imaginer ce cas pour une application mobile.
-    
-    \begin{figure}[h]
-        \centering
-        \begin{tikzpicture}
-        \input{scenarios/general.tex}
-        \end{tikzpicture}
-        \captionof{scenario}{Un scénario interactif avec des interactions et des conditions ; $G_{1\dots5}$ sont les groupes associés aux éléments du modèle. On suppose l'existence de processus de contenus dans chaque contrainte temporelle.}
-        \label{scenar.general}
-    \end{figure}
-
     \item Mixte : il peut y avoir plusieurs lignes temporelles appartenant à différents groupes dans un même scénario. Ces lignes peuvent ensuite se resynchroniser à un instant donné. 
     
     Les annotations donnent l'emplacement d'exécution des contraintes, des processus, et de vérification des expressions. 
@@ -455,7 +460,8 @@ On dénote trois manières de partager l'information dans un scénario :
         \label{scenar.twobranches}
     \end{figure}
 
-    \item Il serait possible d'imaginer une variante au cas mixte : on pourrait synchroniser chaque branche partagée, mais ne pas synchroniser les branches entre elles.
+    \item Il serait possible d'imaginer une variante au cas mixte~: synchroniser les clients de chaque branche partagée, mais ne pas synchroniser les branches entre elles.
+    % TODO expliquer pourquoi pas retenu
     
 \end{itemize}
 
@@ -465,7 +471,7 @@ On dénote trois manières de partager l'information dans un scénario :
 % Cas principalement développé dans rapport de master
 On peut utiliser les méthodes de synchronisation décrites précédemment, mais il est possible d'étendre le mode pré-calculé : 
 
-Comme on connait les dates effectives auxquelles les objets sont sensés s'exécuter, on peut les fixer à l'avance sur chaque machine. 
+Comme on connait les dates effectives auxquelles les objets sont sensés s'exécuter, on peut les fixer à l'avance sur chaque client. 
 Un parcours de graphe permet d'obtenir une estimation des dates minimales auxquelles il est possible de fixer des dates d'exécutions des éléments suivant un point d'interaction donné.
 % Le même mécanisme a été utilisé dans~\cite{celerier2016rethinking} pour spécifier les dates d'exécution et de fin de flux audios.
 Ce principe de pré-calcul permet d'offrir dans une certaine mesure une tolérance au partitionnement :  s'il y a une déconnexion, l'exécution va continuer à fonctionner au moins jusqu'au prochain \trigger. 
@@ -473,8 +479,8 @@ Cela peut laisser du temps à un régisseur pour régler le problème.
 En revanche, puisqu'il n'y a pas d'ordonnancement au moment des points d'interaction, il suffit d'un peu de délai pour que, dans le scénario~\ref{scenar.non-interactif}, le début de l'exécution sur $G_2$ survienne avant la fin de l'exécution sur $G_1$. 
 Il est donc particulièrement important dans ce cas de garder les horloges des machines synchronisées.
 
-On notera que modifier la vitesse d'exécution des éléments en temps réel implique de mettre à jour les estimations de dates sur toutes les autres machines. 
-En autorisant cela, on perd donc une certaine tolérance au partitionnement.
+On notera que modifier la vitesse d'exécution des éléments en temps réel implique de mettre à jour les estimations de dates sur tous les autres clients. 
+En autorisant cela, on perd donc cette certaine tolérance au partitionnement et la cohérence de l'exécution pourra être brisée.
 
 \begin{figure}[h]
 	\centering
@@ -487,23 +493,25 @@ En autorisant cela, on perd donc une certaine tolérance au partitionnement.
 
 
 \subsubsection{Expressions et interactivité}
-Dans le cas ou un scénario est exécuté intégralement en parallèle par différentes machines, il n'y a pas de problème : chacune vérifie les expressions en fonction des données dont elle dispose, et les valide à l'instant ou elle le souhaite. C'est utile si par exemple on veut avoir plusieurs téléphones qui font tous tourner un scénario semblable, mais chaque individu peut choisir de faire avancer le scénario au rythme ou il le souhaite.
+Dans le premier cas, ou un scénario est exécuté intégralement en parallèle par différents clients, il n'y a pas de situation particulière à gérer.
+Chaque client vérifie les expressions en fonction des données dont elle dispose, et les valide à l'instant ou elle le souhaite. 
+C'est utile si par exemple la partition implique plusieurs téléphones qui font tous tourner un scénario semblable, mais où chaque individu peut choisir de faire avancer le scénario au rythme ou il le souhaite.
 
-Dans le cas ou on a un partage de certaines lignes temporelles par certaines machines, le problème de la synchronisation des expressions et de leurs dates d'évaluation se pose.
-
+Dans le cas d'un partage de certaines lignes temporelles par plusieurs clients, il est nécessaire de synchroniser des informations partagées.
+Ce sont par exemple les expressions, leurs dates d'évaluation, et la vitesse d'exécution des contraintes temporelles.
 
 \begin{itemize}
 	\item Prise de décision : s'il n'y a qu'une seule ligne temporelle, chaque expression doit n'avoir qu'une valeur de vérité. Il doit donc y avoir un consensus sur la valeur de cette expression. De même pour la vitesse d'exécution des éléments.
     
     Plusieurs manières d'obtenir un consensus sont possibles : 
     \begin{itemize}
-        \item Dans le cas des conditions, au moins une machine valide ou nie l'expression. 
-        \item Dans le cas des points d'interaction, on peut fixer la valeur de l'expression à celle de la première machine qui la vérifie, à l'aide des estampilles. % Quand une décision est prise, on note la timestamp, et on compare avec les incoming timestamp
-        \item Dans le cas des points d'interaction, une majorité de machines valident l'expression.
-        \item Toutes les machines valident ou nient l'expression.
+        \item Dans le cas des conditions, au moins un client valide ou nie l'expression. 
+        \item Dans le cas des points d'interaction, on peut fixer la valeur de l'expression à celle du premier client qui la vérifie, à l'aide des estampilles. % Quand une décision est prise, on note la timestamp, et on compare avec les incoming timestamp
+        \item Dans le cas des points d'interaction, une majorité de clients valident l'expression.
+        \item Tous les clients valident ou nient l'expression.
     \end{itemize}
 
-	\item On peut supposer que des sous-parties d'un scénario pourraient être exécutées entièrement par une machine ou groupe.
+	\item On peut supposer que des sous-parties d'un scénario pourraient être exécutées entièrement par un client ou groupe.
 \end{itemize}
 
 On note plusieurs problèmes possibles : 
@@ -532,14 +540,18 @@ Ordonnancement : par estampilles.
 Le scénario~\ref{scenar.trigger-1} peut se résoudre de plusieurs manières.
 
 \begin{itemize}
-    \item Si l'exécution du nœud est résolue de manière asynchrone, toutes les machines de $G_2$ envoient l'information de déclenchement à toutes les machines de $G_1$ et $G_3$, sans garantie d'ordre. Les \triggers se déclenchent immédiatement.
+    \item Si l'exécution du nœud se fait de manière asynchrone, tous les clients de $G_2$ envoient l'information de déclenchement à tous les clients de $G_1$ et $G_3$, sans garantie d'ordre.
+    Les \triggers se déclenchent immédiatement.
     
-    Note : si on veut garantir un ordre, ne peut-on pas faire : $G_3$ stoppe $G_1$ qui démarre $B$ ? Ou bien si la borne max est atteinte, $G_1$ stoppe $G_3$ et déclenche $G_2$.
+    Note : si on veut garantir un ordre, ne peut-on pas faire : $G_3$ stoppe $G_1$ qui démarre $G_2$ ? Ou bien si la borne max est atteinte, $G_1$ stoppe $G_3$ et déclenche $G_2$.
     
     \item Si l'exécution du nœud est résolue de manière synchrone : 
     \begin{itemize}
-        \item Si la condition devient vraie, par consensus. On choisit une date, et on fixe l'arrêt des machines de $G_1$ et le départ des clients de $G_2$ par rapport à cette date, calculée en fonction des latences relatives. Potentiellement introduire un tic d'écart entre la fin de $G_1$ et le démarrage de $G_2$ ?
-        \item Si on atteint la borne max : une machine est nécessairement la première à atteindre cette borne.
+        \item Si la condition devient vraie, par consensus. 
+        On choisit une date, et on fixe l'arrêt des clients de $G_1$ et le départ des clients de $G_2$ par rapport à cette date, calculée en fonction des latences relatives. 
+        Potentiellement introduire un tic d'écart entre la fin de $G_1$ et le démarrage de $G_2$ ?
+        \item Si on atteint la borne maximale : un client est nécessairement le premier à atteindre cette borne.
+        Il peut alors en informer les autres, qui vont déclencher le passage à la suite.
     \end{itemize}
 \end{itemize}
 
@@ -601,8 +613,8 @@ On remarquera que le problème de la répartition peut se voir comme deux cas :
 \section{Sémantique}\label{sec.semantique}
 On décrit ici la sémantique des différentes méthodes de synchronisation vues précédemment.
 
-On fait le choix de décrire ce modèle via la sémantique existante de i-score ; en effet, on dispose déjà de primitives de synchronisation et d'envoi de message.
-
+On fait le choix de décrire ce modèle via les primitives de \ossia{}. 
+En effet, on dispose déjà par ce biais de méthodes de synchronisation et d'envoi de message.
 
 %\subsection{Introduction de primitives réparties dans i-score}
 %TODO voir politiques d'exécution de réseaux de Petri dans thèse AA
@@ -624,10 +636,10 @@ On veut que la première s'exécute sur les clients d'un groupe $G_1$, et que la
     \item On introduit une contrainte temporelle $C_{1\rightarrow2}$.
     \item On déplace $C_2$ à la suite de cette contrainte temporelle.
     \item Si on se trouve dans le cas instantané~: on crée un message $M_1$ qui ira déclencher $T_1$ et on rend $C_{1\rightarrow2}$ souple.
-    Dès qu'une machine de $G_1$ arrivera à $M_1$, le message sera envoyé.
-    \item Si on se trouve dans le cas pré-calculé~: la durée calculée sera celle de $C_{1\rightarrow2}$. Les machines du groupe $G_1$ et $G_2$ peuvent être déconnectées après le début de la lecture et continueront à fonctionner comme prévu.
+    Dès qu'un client de $G_1$ arrivera à $M_1$, le message sera envoyé.
+    \item Si on se trouve dans le cas pré-calculé~: la durée calculée sera celle de $C_{1\rightarrow2}$. Les clients du groupe $G_1$ et $G_2$ peuvent être déconnectés après le début de la lecture et continueront à fonctionner comme prévu.
 \end{enumerate}
-Quand il n'y a pas de point d'interaction, le cas simultané n'offre pas d'avantages par rapport au cas précalculé.
+%TODO REVOIR ÇA Quand il n'y a pas de point d'interaction, le cas simultané n'offre pas d'avantages par rapport au cas précalculé.
 
 \begin{figure}[h]
 \centering
@@ -690,7 +702,7 @@ Néanmoins, ce travail a pour objectif de ne pas encombrer le compositeur d'une 
 		\input{scenarios/deplacement-interactif-async.tex}
 		\draw (4.4, 31.95) node {$M_A, M_D, M_C$};
 		\end{tikzpicture}
-		\caption{Répartition du scénario (a) dans le cas asynchrone non-ordonné : les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $C$ s'arrêteront et démarreront sans ordre prévisible.}
+		\caption{Répartition du scénario (a) dans le cas asynchrone non-ordonné : les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $G_3$ s'arrêteront et démarreront sans ordre prévisible.}
 \end{figure}
 \begin{figure}[h]
 	\centering
@@ -701,7 +713,7 @@ Néanmoins, ce travail a pour objectif de ne pas encombrer le compositeur d'une 
 		\draw (3.2, 30.6905) node {$M_D$}; 
 		\draw (3.2, 29.1594) node {$M_C$}; 
 		\end{tikzpicture}
-		\caption{Répartition du scénario (a) dans le cas asynchrone ordonné: les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $C$ s'arrêteront dans l'ordre, avec un délai potentiel entre la fin de $A,D$ et le début de $C$.}
+		\caption{Répartition du scénario (a) dans le cas asynchrone ordonné: les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $G_3$ s'arrêteront dans l'ordre, avec un délai potentiel entre la fin de $A,D$ et le début de $G_3$.}
 	
 \end{figure}
 \FloatBarrier
@@ -773,7 +785,7 @@ En LAN gigabit on est en général < à une milliseconde.
 %Deux manières : offrir un processus de mapping spécialisé qui permet de définir les relations qu'on veut dans un groupe ("first", "all", "mean", "sum", etc...)
 
 %Ou bien faire cette transformation à plus bas niveau (pour les devices) : les sorties sont constantes mais on peut appliquer des transformations aux entrées.
-%Par exemple, si on possède un device spécial "network" avec l'arbre local de chaque "groupe", qui offre une couche d'abstraction au-dessus des méchanismes de consensus, on peut avoir des possibilités plus riches, telles que : l'expression $e_2$ est vraie si l'expression $e_1$ était vraie pour le groupe $B$ et fausse pour le groupe $A$.
+%Par exemple, si on possède un device spécial "network" avec l'arbre local de chaque "groupe", qui offre une couche d'abstraction au-dessus des méchanismes de consensus, on peut avoir des possibilités plus riches, telles que : l'expression $e_2$ est vraie si l'expression $e_1$ était vraie pour le groupe $G_2$ et fausse pour le groupe $A$.
 
 %Pour permettre plus de possibilités, on introduit la possibilité de réaliser des expressions qui réalisent un pattern-matching : \lstinline|network:/*/trigger == true|.
 
