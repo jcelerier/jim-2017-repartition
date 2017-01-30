@@ -58,9 +58,9 @@
 \section{Introduction}
 On cherche à définir une sémantique permettant de décrire l'exécution d'une partition interactive sur plusieurs machines d'un réseau local, en prenant en compte les exécutions parallèles, c'est-à-dire que deux machines jouent ensemble, de manière synchronisée ou non, ainsi que les exécutions sérielles : une machine joue une partie, puis une autre joue la suite.
 
-On parle ici de «jeu» de manière abstraite~: on s'intéresse au contrôle de tous types de paramètres et non pas uniquement aux paramètres musicaux.
+On parle ici de « jeu » de manière abstraite~: on s'intéresse au contrôle de tous types de paramètres et non pas uniquement aux paramètres musicaux.
 
-On présentera plusieurs applications et besoins rencontrées par des artistes et auteurs, qui ont motivé ce travail.
+On présentera plusieurs applications et besoins rencontrés par des artistes et auteurs, qui ont motivé ce travail.
 
 À partir de ces besoins, on cherche à définir les ajustements nécessaires au modèle \ossia pour permettre d'exprimer le plus simplement possible des structures réparties dans une partition interactive.
 
@@ -96,11 +96,11 @@ Durant cette trame, à différents moments, les participants vont pouvoir intera
 Les actions possibles varient en fonction du nombre de participants présents lors de chaque représentation.
 L'application les avertit par un compte à rebours de la date de leur prochaine interaction. 
 Ils disposent ensuite d'une durée déterminée pour agir : changer un paramètre d'un effet, déclencher des sons, spatialiser un objet sonore\dots{}
-Par exemple, de une minute trente à deux minutes, deux des participants vont pouvoir changer l'intensité d'un effet de chorus, et deux autres vont pouvoir déplacer un objet sonore dans la scène spatiale. 
+Par exemple, entre $t=1m30$ et $t=2m$, deux des participants vont pouvoir changer l'intensité d'un effet de chorus, et deux autres vont pouvoir déplacer un objet sonore dans la scène spatiale. 
 
 Ce projet permet d'exhiber plusieurs besoins importants : 
 \begin{itemize}
-    \item La présence d'une forme de polyphonie répartie, avec un nombre de «voix» non fixées au moment de l'écriture.
+    \item La présence d'une forme de polyphonie répartie, avec un nombre de « voix » non fixées au moment de l'écriture.
     \item L'écriture de cette polyphonie dans le temps : à un instant, au plus deux téléphones sont actifs, à  un autre instant aucun ne l'est, etc.
     \item Le fonctionnement sur des réseaux avec des caractéristiques non idéales, comme le réseau WiFi des téléphones mobiles.
 \end{itemize}
@@ -279,7 +279,7 @@ On prendra garde à ne pas confondre ce travail avec la forme de répartition qu
 %Détailler les implications des choix par rapport au théorême CAP et PACELT.
 
 \subsection{Rappel du modèle d'i-score}
-Ce document présente la problématique de répartition dans le cadre du logiciel i-score, qui implémente le modèle \ossia\cite{celerier2015ossia} pour les partitions interactives.
+On s'intéresse à la problématique de répartition dans le cadre du logiciel i-score, qui implémente le modèle \ossia\cite{celerier2015ossia} pour les partitions interactives.
 Il consiste en un agencement d'éléments permettant de définir des comportements temporels. 
 Les éléments dont nous avons besoin ici sont : 
 \begin{itemize}
@@ -298,7 +298,7 @@ Des exemples sont visibles en section~\ref{sec.description}, par exemple les sc�
 %\subsubsection{Répartition à l'édition}
 
 \subsection{Nouvelles notions}
-Nous nous trouvons en présence de plusieurs ordinateurs qui communiquent et partagent un document.
+Nous nous trouvons en présence de plusieurs ordinateurs qui communiquent et partagent une même structure de donnée : un document.
 L'ensemble constitué par les instances d'i-score et le document qu'elles partagent est appelé \vocab{session}.
 
 On désigne par \vocab{client} une instance d'i-score connectée à une session, qui peut être sur une machine différente.
@@ -319,7 +319,7 @@ sans avoir besoin de mettre à jour le scénario.
 \begin{figure}[h]
 	\centering
 	\includegraphics[scale=0.4]{images/groupes.eps}
-	\caption{Plusieurs groupes $G_1,G_2,G_3$ avec plusieurs clients hétérogènes dans chaque groupe.}
+	\caption{Plusieurs groupes $G_1,G_2,G_3$ avec plusieurs groupes hétérogènes.}
 	\label{img.groupes}
 \end{figure}
 
@@ -577,10 +577,10 @@ Le maître s'exécute avec une horloge physique.
 Quand les clients reçoivent ce message, ils appliquent une attente active\footnote{\textit{busy wait}} jusqu'à ce que l'exécution du tic prenne place.
 % TODO faire quelques phrases sur une possible répartition bas-niveau asservie : dans ce cas, on a un maître qui 'tick' régulièrement ; les esclaves réagissent à ce tick en faisant un busy wait jusqu'à la date à laquelle ils doivent s'exécuter.
 \subsection{Récapitulatif}
-On choisit pour la répartition un modèle de document partagé : touts les clients voient le même document, mais peuvent chacune en interpréter des sous-parties différemment à la discrétion du compositeur.
-
 On introduit une notion de client (potentiellement une machine physique) et de groupe.
 Un groupe peut contenir plusieurs clients, et un client peut être présent dans plusieurs groupes.
+
+On choisit pour la répartition un modèle de document partagé : tous les clients voient le même document, mais peuvent chacun en interpréter des sous-parties différemment, à la discrétion du compositeur.
 
 Différents objets du modèle d'i-score peuvent être assignés à un ou plusieurs groupes : 
 
@@ -616,7 +616,7 @@ Pour chaque scénario tel qu'écrit par le compositeur, comme les scénarios~\re
 \subsection{Déplacement sans interactivité}
 Le premier cas, visible dans le scénario~\ref{scenar.simple} est celui du déplacement.
 Deux contraintes $C_1$, $C_2$ se suivent. 
-On veut que la première s'exécute sur les clients d'un groupe $G_1$, puis que la seconde s'exécute sur les clients d'un groupe $G_2$. 
+On note $C_1 : G_1$ le fait que la contrainte temporelle $C_1$ s'exécute sur les machines du groupe $G_1$.
 Le basculement de $C_1$ à $C_2$ se fait à une date connue à l'avance : on n'attend pas d'interactions.
 
 %TODO bien préciser qu'est-ce qui s'exécute sur chaque machine.
@@ -635,7 +635,7 @@ On applique les transformations suivantes~:
     \item On introduit une contrainte temporelle $C_{1\rightarrow2}$.
     \item On déplace $C_2$ à la suite de cette contrainte temporelle.
     \item[4a.] Cas instantané asynchrone (fig.~\ref{depl.simple.async.instant}).
-    On crée un message $M_1$ à la fin de $C_1$ qui ira déclencher automatiquement $T_1$. 
+    On crée un message $M_1$ à la fin de $C_1$ qui ira déclencher automatiquement le \trigger $T_1$. 
     Cela implique la souplesse de $C_{1\rightarrow2}$.
     Ce message sera envoyé lorsqu'un consensus sur le groupe $G_1$ sera établi, avec une des politiques énoncées en section~\ref{section.expr-interact}.
     %Dès qu'un client de $G_1$ arrivera à $M_1$, le message sera envoyé.
@@ -732,7 +732,7 @@ Dans le cas synchrone instantané : les messages partent le plus tôt possible, 
 Dans le cas simultané, la structure est la même que dans le cas asynchrone non-ordonné. La différence est dans les messages qui sont envoyés : $M_A, M_D, M_C$ fixent la date à laquelle $T_A$, $T_D$, $T_C$ doivent partir.
 
 On notera qu'il serait possible d'exprimer des variantes plus fines : par exemple rendre simultanés les fins de $A,D$ mais pas le début de $C$. 
-Néanmoins, ce travail a pour objectif de ne pas encombrer le compositeur d'une finesse trop peu souvent nécessaire, en lui offrant un accès facile à des concepts de haut-niveau dont la nécessité est apparue lors des études de cas.
+Néanmoins, ce travail a pour objectif de ne pas encombrer le compositeur d'une finesse trop rarement nécessaire, en lui offrant un accès facile à des concepts de haut-niveau dont la nécessité est apparue lors des études de cas.
 
 \begin{figure}[h]
 	\centering
