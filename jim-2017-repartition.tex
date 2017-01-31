@@ -175,21 +175,21 @@ La littérature sur les systèmes distribués distingue plusieurs familles d'hor
 \begin{itemize}
     \item Les horloges physiques marquent l'avancement du temps dans le monde matériel.
     \item Les horloges logiques marquent l'avancement du temps dans les étapes d'un algorithme réparti, donc sans relation avec du temps en secondes.
-    \item Plus récemment, les horloges hybrides ont été introduites afin de concilier ces deux familles.
+    \item Les horloges hybrides ont été récemment introduites afin de concilier ces deux familles.
 \end{itemize}
 
 Les deux principales méthodes pour la synchronisation d'horloges physiques sont \emph{Network Time Protocol}\cite{mills1991internet} et \emph{Precision Time Protocol}\cite{peng2009research}. 
-Le premier est disponible sur de nombreuses plate-formes et permet en pratique d'atteindre une précision de synchronisation de quelques milliseconde sur internet. 
-Le second est plus précis et promet une précision proche de la microseconde. 
+NTP est disponible sur de nombreuses plate-formes et permet en pratique d'atteindre une précision de synchronisation de quelques milliseconde sur internet. 
+PTP est plus précis et promet une précision proche de la microseconde. 
 Cependant, cela dépend de la précision avec laquelle les paquets sont estampillés\footnote{timestamped} et donc de la qualité de l'horloge de l'implémentation PTP. 
 En pratique, l'intérêt de PTP sera plus prononcé lorsque du matériel dédié et onéreux (\emph{Grand Master Clock}) est disponible pour réaliser l'estampillage des paquets.
 
 On rappelle qu'une horloge monotone a pour caractéristique de toujours progresser vers l'avant. 
 Un des désavantages de l'utilisation des horloges physiques pour l'estampillage est qu'elles ne sont pas monotones. 
-Notamment, les secondes intercalaires bouleversent régulièrement les systèmes distribués basés sur les horloges physiques.
+Par exemple, les secondes intercalaires bouleversent régulièrement les systèmes distribués basés sur les horloges physiques.
 
 Les horloges logiques ont été introduites par Leslie Lamport~\cite{lamport1978time} afin d'offrir des possibilités de raisonnement et de vérification formelles sur l'écoulement du temps dans les systèmes répartis.
-Notamment, les estampilles de Lamport permettent d'offrir un ordre partiel entre les messages échangés dans un système réparti.
+En particulier, les estampilles de Lamport permettent d'offrir un ordre partiel entre les messages échangés dans un système réparti.
 
 Ce mécanisme a été par la suite généralisé, d'abord par les horloges vectorielles, puis par les horloges matricielles. 
 Dans le premier cas, chaque message contient un tableau contenant l'horloge de son émetteur ainsi que les horloges connues des autres processus. Dans le second cas, chaque message contient le vecteur contenant les vecteurs d'horloges de chaque processus.
@@ -326,7 +326,7 @@ sans avoir besoin de mettre à jour le scénario.
 \begin{figure}[h]
 	\centering
 	\includegraphics[scale=0.4]{images/groupes.eps}
-	\caption{Plusieurs groupes $G_1,G_2,G_3$ avec plusieurs groupes hétérogènes.}
+	\caption{Plusieurs groupes hétérogènes $G_1,G_2,G_3$.}
 	\label{img.groupes}
 \end{figure}
 
@@ -353,7 +353,7 @@ Ici les processus de contenu sont représentés par une boite barrée en diagona
 Le scénario est le processus central d'i-score : il met en relation les différents éléments temporels, en parallèle et en série.
 
 Plusieurs manières de répartir l'exécution d'un scénario, offrant différentes possibilités d'écriture, sont détaillées ci-dessous. 
-On sépare le cas général permettant l'interactivité dans un scénario du cas plus simple ou les dates sont fixées.
+On sépare le cas général permettant l'interactivité dans un scénario du cas plus simple où les dates sont fixées.
 Dans le premier cas (scénario~\ref{scenar.general}), l'avancement dépend du déclenchement d'un évènement externe, tandis que dans le second (scénario~\ref{scenar.non-interactif}), l'avancement ne dépend pas de paramètres externes. 
 
 On travaillera dans les exemples suivants avec plusieurs groupes $G_{1\dots N}$ disposant chacun d'un nombre inconnu de clients. 
@@ -362,7 +362,7 @@ On pourra supposer que les contraintes temporelles portent chacune des processus
 Dans le modèle \ossia, le nœud temporel est l'objet permettant de synchroniser le début et la fin de plusieurs structures temporelles. 
 Nous analysons d'abord les choix qui doivent être fait pour traduire ce mécanisme dans le cas réparti, puis étudions l'impact sur le processus scénario dans son ensemble en présentant les politiques de répartition de haut niveau.
 \subsubsection{Modes de synchronisation}
-Il est difficile d'offrir une synchronisation forte (par exemple avec une précision d'une milliseconde, dans un système réparti\cite{sheehy2015there}. 
+Il est difficile d'offrir une synchronisation forte, par exemple avec une précision d'une milliseconde, dans un système réparti\cite{sheehy2015there}. 
 Une contrainte additionnelle que l'on s'impose est le fonctionnement du système sur du matériel grand public. 
 Ce matériel ne supportera pas toujours des fonctionnalités telles que Ethernet synchrone\cite{ferrant2008synchronous} ou PTP.
 
@@ -370,8 +370,8 @@ Ce matériel ne supportera pas toujours des fonctionnalités telles que Ethernet
 
 On identifie deux possibilités de synchronisation, manifestant leur utilité dans des cas différent : 
 \begin{itemize}
-	\item Mode synchrone : respecte la sémantique \ossia{}~: les éléments s'exécutent dans le même ordre que si le scénario n'était pas réparti, au prix d'une latence augmentée en présence d'interactivité.
-	\item Mode asynchrone : ne respecte pas la sémantique~: une exécution d'un objet peut terminer après que l'exécution de l'objet suivant ait commencé. En revanche, la latence est diminuée.    
+	\item Mode synchrone : respecte la sémantique \ossia{}. Les éléments s'exécutent dans le même ordre que si le scénario n'était pas réparti, au prix d'une latence augmentée en présence d'interactivité.
+	\item Mode asynchrone : ne respecte pas la sémantique. Une exécution d'un objet peut terminer après que l'exécution de l'objet suivant ait commencé. En revanche, la latence est diminuée.    
 \end{itemize}
 
 De plus, on considère la manière dont l'information se propage dans le système :
@@ -399,7 +399,7 @@ Les différents modes de synchronisation vont impacter :
 \end{itemize}
 
 Lorsqu'un choix doit être fait, un consensus peut être pris au niveau du groupe auquel est assigné l'objet. 
-Par exemple, quelle va être la vitesse à laquelle une contrainte temporelle va s'exécuter.
+Par exemple, la vitesse à laquelle une contrainte temporelle va s'exécuter.
 Les mécanismes de consensus possibles sont par la suite discutés en section~\ref{section.consensus}.
 
 \subsubsection{Cas interactif}
@@ -454,7 +454,7 @@ On dénote trois manières de partager l'information dans un scénario :
     Ces lignes peuvent ensuite se resynchroniser à un instant donné. 
     
     On considère le graphe dont les nœuds temporels sont les sommets et les contraintes temporelles sont les arêtes.
-    Les lignes temporelles sont les sous-graphe connexes de ce graphe, telles que les contraintes et les nœuds soient associés au même groupe.
+    Les lignes temporelles sont les sous-graphes connexes de ce graphe, telles que les contraintes et les nœuds soient associés au même groupe.
     
     Les annotations donnent l'emplacement d'exécution des contraintes, des processus, et de vérification des expressions. 
 %    Un client ne sait pas à l'avance si il va pouvoir se déclencher ou non. 
@@ -462,7 +462,7 @@ On dénote trois manières de partager l'information dans un scénario :
     Considérons le scénario~\ref{scenar.twobranches}. 
     La différence avec le cas du partage complet tient dans le fait que seuls les clients appartenant au groupe $G_1$ vont exécuter la branche du haut.
     Ils peuvent ou non avoir l'obligation de se synchroniser entre eux. 
-    L'important est qu'une synchronisation ait lieu pour tous les clients appartenant à $G_1$ et $G_2$ lors du dernier \trigger, situé à droite.
+    Il faut alors qu'une synchronisation ait lieu pour tous les clients appartenant à $G_1$ et $G_2$ lors du dernier \trigger, situé à droite.
     
     Comme pour le premier cas, en raison de possibilités d'exécutions divergentes du même contenu, il est impossible d'offrir une répartition hiérarchique cohérente.
     
@@ -484,7 +484,7 @@ On dénote trois manières de partager l'information dans un scénario :
 
 \subsubsection{Cas non-interactif}
 % Cas principalement développé dans rapport de master
-On peut utiliser les méthodes de synchronisation décrites précédemment, mais il est possible d'étendre le mode compensé : 
+On peut utiliser les méthodes de synchronisation décrites précédemment, mais il est possible d'étendre le mode compensé. 
 
 Comme on connait les dates effectives auxquelles les objets sont sensés s'exécuter, il est possible de les fixer à l'avance sur chaque client. 
 Un parcours de graphe permet d'obtenir une estimation des dates minimales auxquelles il sera possible de fixer des dates d'exécutions des éléments suivant un point d'interaction donné. 
@@ -510,9 +510,9 @@ En autorisant cela, on perd donc aussi cette tolérance au partitionnement et la
 
 \subsubsection{Expressions et interactivité}
 \label{section.expr-interact}
-Dans le cas sans partage, ou un scénario est exécuté intégralement en parallèle par différents clients, il n'y a pas de situation particulière à gérer.
+Dans le cas sans partage, où un scénario est exécuté intégralement en parallèle par différents clients, il n'y a pas de situation particulière à gérer.
 Chaque client vérifie les expressions en fonction des données dont elle dispose, et les valide à l'instant ou elle le souhaite. 
-C'est utile si par exemple la partition implique plusieurs téléphones qui font tous tourner un scénario semblable, mais où chaque individu peut choisir de faire avancer le scénario au rythme ou il le souhaite.
+Cela peut être utile si par exemple la partition implique plusieurs téléphones qui font tous tourner un scénario semblable, mais où chaque individu peut choisir de faire avancer le scénario au rythme où il le souhaite.
 
 Dans le cas d'un partage de certaines lignes temporelles par plusieurs clients, il est nécessaire de synchroniser des informations partagées.
 Ce sont par exemple les expressions, leurs dates d'évaluation, et la vitesse d'exécution des contraintes temporelles.
@@ -537,7 +537,7 @@ On note plusieurs problèmes possibles :
 \begin{itemize}
     \item La déconnexion d'un client lors d'une prise de décision. 
     Dans ce cas, on peut s'informer de la déconnexion, en effectuant un ping régulier, et prendre la décision avec les participants restants. 
-    \item Le cas d'un \textit{ex æquo}~, si un groupe a un nombre pair de participants.
+    \item Le cas d'un \textit{ex æquo}, si un groupe a un nombre pair de participants.
     Il existe plusieurs possibilités de résolution : 
     \begin{itemize}
         \item Choisir en fonction des estampilles : le premier choix est celui qui est retenu.
@@ -758,10 +758,10 @@ Dans le cas asynchrone, en scénario~\ref{scenar.depl-interactif-async}, $M_1, M
 
 Dans le cas synchrone, en scénario~\ref{scenar.depl-interactif-sync}, les messages partent le plus tôt possible, mais le déclenchement de $T_3$ implique la fin de l'exécution de $C_1$ et $C_4$. $T_3$ démarrera lorsque tous les messages $M_3$ auront été envoyés : son expression est une conjonction logique sur la réception de $M_{3_{1,..N}}$ avec $1,..N$ les groupes précédant $T$.
 
-Dans les cas compensé, la structure ne change pas. 
+Dans les cas compensés, la structure ne change pas. 
 Les messages envoyés changent : $M_1, M_3, M_4$ fixent la date à laquelle $T_1$, $T_3$, $T_4$ doivent partir de manière à ce qu'ils se déroulent en même temps.
 
-Il serait possible d'exprimer des variantes plus fines : par exemple rendre simultanés les fins de $C_1, C_4$ mais pas le début de $C_3$. 
+Il serait possible d'exprimer des variantes plus fines : par exemple rendre simultanées les fins de $C_1, C_4$ mais pas le début de $C_3$. 
 Néanmoins, ce travail n'a pas pour objectif d'encombrer le compositeur d'une finesse trop rarement nécessaire, en lui offrant un accès facile à des concepts de haut-niveau dont la nécessité est apparue lors des études de cas.
 
 
@@ -849,11 +849,11 @@ L'objectif est d'offrir de nouvelles possibilités d'écriture au compositeur tr
 
 Les différentes possibilités de synchronisation des structures temporelles sont introduites. 
 D'abord au niveau d'un nœud temporel, en permettant divers degrés de cohésion avec la structure donnée par le compositeur, allant d'exécutions pas nécessairement simultanées mais avec une latence faible, à des exécutions avec une latence plus importante, mais permettant une plus grande simultanéité pour l'observateur.
-Puis au niveau d'un scénario, ou l'on considère les possibilités de partage qu'il peut y avoir entre plusieurs machines exécutant un même scénario : toutes en parallèle, certaines en série, etc.
+Puis au niveau d'un scénario, où l'on considère les possibilités de partage qu'il peut y avoir entre plusieurs machines exécutant un même scénario : toutes en parallèle, certaines en série, etc.
 
 La suite de ce travail consistera à étendre les possibilités d'écriture pour inclure des informations d'interaction plus complexes.
 Par exemple, on souhaiterait pouvoir contrôler un paramètre tel que le volume d'un son en temps réel, en prenant en compte les interactions de plusieurs participants sur leur téléphone. 
-Des comportements tels que « prendre la valuer moyenne », « prendre la valeur la plus élevée » pourraient alors être introduits dans la palette à disposition de l'auteur.
+Des comportements tels que « prendre la valeur moyenne », « prendre la valeur la plus élevée » pourraient alors être introduits dans la palette à disposition de l'auteur.
 % Ouverture : 
 %\subsubsection{Comportements de groupes}
 %-> pourquoi ne pas avoir la même chose au niveau des mappings (et pour tout ce qui n'est pas fixé de manière générale ?)
