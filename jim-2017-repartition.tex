@@ -1,8 +1,10 @@
-\documentclass{article}
+\documentclass[10pt]{article}
 \usepackage{fontspec}
 \usepackage{jim}
 \usepackage{amsmath}
-\usepackage[french]{babel}
+\usepackage{csquotes}
+\usepackage{polyglossia}
+\setdefaultlanguage{french} 
 \usepackage{listings}
 \usepackage{diagbox}
 \usepackage{caption}
@@ -16,9 +18,10 @@
 \usepackage{subcaption}
 \usepackage{placeins}
 \usepackage[backend=biber]{biblatex}
+\usepackage{authblk}
 \addbibresource{biblio.bib}
 
-\setmainfont{Tribun ADF Std}
+\setmainfont{Times New Roman}
 \setmonofont{Fira Code}
 \newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}   %% centered
 \newcolumntype{R}[1]{>{\raggedright\arraybackslash}m{#1}}  %% right aligned
@@ -29,15 +32,18 @@
 \newcommand\triggers{points d'interaction\xspace}
 \newcommand\ossia{OSSIA\xspace}
 \newcommand\vocab[1]{\textbf{#1}}
-\DeclareCaptionType{scenario}[Scénario]
+\DeclareCaptionType{scenario}[\bfseries Scénario]
 % Title.
 % ------
 \title{Exécution répartie de scénarios interactifs}
 
-\threeauthors
-  {Auteur 1} {Organisme \\ Adresse électronique}
-  {Auteur 2} {Organisme \\ Adresse électronique}
-  {Auteur 3} {Organisme \\ Adresse électronique}
+\author[1,2]{Jean-Michaël Celerier$^*$\thanks{$^*$: jcelerier@u-bordeaux.fr}}
+\author[1]{Myriam Desainte-Catherine$^{**}$\thanks{$^{**}$: myriam@labri.fr}}
+\author[2]{Jean-Michel Couturier$^{***}$\thanks{$^{***}$: jmc@blueyeti.fr}}
+\affil[1]{Univ. Bordeaux, LaBRI, UMR 5800, F-33400 Talence, France}
+\affil[2]{ Blue Yeti, F-17110 France}
+
+\renewcommand\Authands{, }
 
 \begin{document}
 \maketitle
@@ -88,7 +94,8 @@ Pour conclure, les détails d'une première implémentation seront présentés.
 \end{figure}
 
 Quarrè
-\footnote{\url{https://scrime.labri.fr/blog/quarre-composition-interactive}} est une installation interactive en son spatialisé réalisée par Pierre Cochard au SCRIME. Elle utilise Max/MSP, i-score, et une application mobile développée pour l'occasion. 
+\footnote{\tiny\url{https://scrime.labri.fr/blog/quarre-composition-interactive}} est une installation interactive en son spatialisé réalisée par Pierre Cochard au SCRIME. 
+Elle utilise Max/MSP, i-score, et une application mobile développée pour l'occasion. 
 Elle implique entre un et cinq participants possédant chacun un téléphone.
 
 Une trame principale d'environ une demi-heure se déroule sur une machine fixe.
@@ -262,7 +269,7 @@ La répartition se fait automatiquement à partir de la spécification de haut n
 % TODO REVIEW THIS SENTENCE
 On prendra garde à ne pas confondre ce travail avec la forme de répartition qui existe déjà dans le projet et permet d'orchestrer d'autres logiciels via des protocoles comme OSC.
 
-% Enfin, la section~\ref{sec.evaluation} présente une évaluation des performances dans le cadre d'une implémentation pratique.
+% Enfin, la section~\ref{sec.implementation} présente une évaluation des performances dans le cadre d'une implémentation pratique.
 
 %-------------------------------------------
 %Première approche basées sur réseau de Pe-tri.
@@ -278,7 +285,7 @@ On prendra garde à ne pas confondre ce travail avec la forme de répartition qu
 
 %Détailler les implications des choix par rapport au théorême CAP et PACELT.
 
-\subsection{Rappel du modèle d'i-score}
+\subsection{Rappel du modèle}
 On s'intéresse à la problématique de répartition dans le cadre du logiciel i-score, qui implémente le modèle \ossia\cite{celerier2015ossia} pour les partitions interactives.
 Il consiste en un agencement d'éléments permettant de définir des comportements temporels. 
 Les éléments dont nous avons besoin ici sont : 
@@ -303,7 +310,7 @@ L'ensemble constitué par les instances d'i-score et le document qu'elles partag
 
 On désigne par \vocab{client} une instance d'i-score connectée à une session, qui peut être sur une machine différente.
 
-On désire s'affranchir des notions propres aux machines physiques et des problématiques de réseau, comme les adresses IP, ports des machines, lors de l'écriture d'un scénario réparti. 
+On désire s'affranchir des notions propres aux machines physiques et des problématiques de réseau, telles que adresses IP, ports des machines, lors de l'écriture d'un scénario réparti. 
 
 Pour ce faire, la notion de \vocab{groupe} est introduite. 
 Un groupe est un ensemble de clients auxquels les mêmes objectifs d'exécution sont assignés.
@@ -388,7 +395,7 @@ Les différents modes de synchronisation vont impacter :
 \begin{itemize}
     \item L'exécution des \triggers.
     \item La vérification de la validité des conditions.
-    \item Le changement de vitesse d'exécution des contraintes temporelles.
+    \item Le changement de la vitesse des contraintes temporelles.
 \end{itemize}
 
 Lorsqu'un choix doit être fait, un consensus peut être pris au niveau du groupe auquel est assigné l'objet. 
@@ -404,11 +411,11 @@ On dénote trois manières de partager l'information dans un scénario :
     Si par exemple on assigne le groupe $G_1$ au scénario~\ref{scenar.general}, tous les clients de $G_1$ vont exécuter toutes les contraintes temporelles et évaluer toutes les expressions, sans communiquer entre eux sur leurs résultats. 
     Par exemple, pour deux clients de $G_1$, le \trigger pourra se déclencher à des instants différents, et la condition pourra avoir une valeur différente.
     
-    Dans ce cas, les annotations de groupes assignés aux objets du scénario sont ignorés, récursivement. 
+    Dans ce cas, les annotations de groupes assignés aux objets du scénario sont récursivement ignorés. 
     Puisque chaque exécution va avoir des temps d'exécution différents pour chaque point d'interaction, il ne peut pas y avoir de synchronisation.
     La seule politique d'exécution qui pourrait faire sens serait que le premier client à valider un \trigger dans un scénario non partagé avertirait les clients suivants.
     
-    Ce cas est notamment utile pour des sous-scénarios dont plusieurs participants à une installation artistique peuvent faire l'expérience en même temps, tout en gardant une trame générale de plus haut niveau. 
+    Ce cas est utile pour des sous-scénarios dont plusieurs participants à une installation artistique font une expérience partagée, tout en gardant une trame générale de plus haut niveau. 
     Typiquement, on peut imaginer ce cas pour une application mobile.
     
     \begin{figure}[h]
@@ -446,7 +453,7 @@ On dénote trois manières de partager l'information dans un scénario :
     \item Mixte : il peut y avoir plusieurs lignes temporelles appartenant à différents groupes dans un même scénario. 
     Ces lignes peuvent ensuite se resynchroniser à un instant donné. 
     
-    On considère le graphe dont les sommets sont les nœuds temporels et les arêtes sont les contraintes temporelles.
+    On considère le graphe dont les nœuds temporels sont les sommets et les contraintes temporelles sont les arêtes.
     Les lignes temporelles sont les sous-graphe connexes de ce graphe, telles que les contraintes et les nœuds soient associés au même groupe.
     
     Les annotations donnent l'emplacement d'exécution des contraintes, des processus, et de vérification des expressions. 
@@ -528,7 +535,7 @@ Ce sont par exemple les expressions, leurs dates d'évaluation, et la vitesse d'
 
 On note plusieurs problèmes possibles : 
 \begin{itemize}
-    \item La déconnexion intempestive d'un client lors d'une prise de décision. 
+    \item La déconnexion d'un client lors d'une prise de décision. 
     Dans ce cas, on peut s'informer de la déconnexion, en effectuant un ping régulier, et prendre la décision avec les participants restants. 
     \item Le cas d'un \textit{ex æquo}~, si un groupe a un nombre pair de participants.
     Il existe plusieurs possibilités de résolution : 
@@ -614,12 +621,6 @@ Pour chaque scénario tel qu'écrit par le compositeur, comme les scénarios~\re
 %TODO voir politiques d'exécution de réseaux de Petri dans thèse AA
 
 \subsection{Déplacement sans interactivité}
-Le premier cas, visible dans le scénario~\ref{scenar.simple} est celui du déplacement.
-Deux contraintes $C_1$, $C_2$ se suivent. 
-On note $C_1 : G_1$ le fait que la contrainte temporelle $C_1$ s'exécute sur les machines du groupe $G_1$.
-Le basculement de $C_1$ à $C_2$ se fait à une date connue à l'avance : on n'attend pas d'interactions.
-
-%TODO bien préciser qu'est-ce qui s'exécute sur chaque machine.
 \begin{figure}[h]
     \centering
     \begin{tikzpicture}
@@ -629,21 +630,32 @@ Le basculement de $C_1$ à $C_2$ se fait à une date connue à l'avance : on n'a
     \label{scenar.simple}
 \end{figure} 
 
+Le premier cas, visible dans le scénario~\ref{scenar.simple} est celui du déplacement.
+Deux contraintes $C_1$, $C_2$ se suivent. 
+On note $C_1 : G_1$ le fait que la contrainte temporelle $C_1$ s'exécute sur les machines du groupe $G_1$.
+Le basculement de $C_1$ à $C_2$ se fait à une date connue à l'avance : on n'attend pas d'interactions.
+
+%TODO bien préciser qu'est-ce qui s'exécute sur chaque machine.
+
 On applique les transformations suivantes~: 
 \begin{enumerate}
     \item On crée une bifurcation au niveau du premier \timenode, avant $C_1$.
     \item On introduit une contrainte temporelle $C_{1\rightarrow2}$.
     \item On déplace $C_2$ à la suite de cette contrainte temporelle.
     \item[4a.] Cas instantané asynchrone (fig.~\ref{depl.simple.async.instant}).
+    
     On crée un message $M_1$ à la fin de $C_1$ qui ira déclencher automatiquement le \trigger $T_1$. 
     Cela implique la souplesse de $C_{1\rightarrow2}$.
     Ce message sera envoyé lorsqu'un consensus sur le groupe $G_1$ sera établi, avec une des politiques énoncées en section~\ref{section.expr-interact}.
     %Dès qu'un client de $G_1$ arrivera à $M_1$, le message sera envoyé.
     \item[4b.] Cas compensé synchrone (fig.~\ref{depl.simple.async.instant}).
+    
     % TODO comment compenser les fins de $C_1$ : mettre à jour une estimation en permanence ?
     Lorsqu'un consensus est établi sur la date de fin de $C_1$, un message $M_1$ est envoyé aux clients de $G_2$ avec cette date, de manière à ce que leur exécution démarre en même temps que la fin de $C_1$.
     \item[4c.] Cas compensé asynchrone (fig.~\ref{depl.simple.sync.comp}). 
+    
     Le message $M_1$ est envoyé au début de $C_1$ plutôt qu'à la fin.
+    Sur les machines de $G_1$, le \trigger $T_1$ n'attend rien. Il attend $M_1$ sur les machines de $G_2$.
     Les clients du groupe $G_1$ et $G_2$ peuvent être déconnectés après le début de la lecture et continueront à fonctionner comme prévu.
 \end{enumerate}
 
@@ -651,7 +663,7 @@ On remarquera trois choses :
 \begin{itemize}
     \item Puisqu'il n'y a pas d'expressions, le mode instantané synchrone n'apporte rien par rapport au mode instantané asynchrone.
     En effet, le démarrage de $C_2$ implique dans tous les cas la fin de $C_1$, car ce sont les clients du groupe qui évaluent $C_1$ qui décident de la date d'exécution du nœud temporel les séparant, contrairement au cas ou une expression serait évaluée par un autre groupe que $G_1$ ou $G_2$.
-    \item Le cas compensé synchrone correspond à ce qu'il se passerait automatiquement si on disposait d'horloges parfaites.
+    \item Le cas compensé synchrone correspond à l'exécution hypothétique ou chaque machine dispose d'horloges parfaites.
     \item Le cas compensé avec pré-calcul est incompatible avec une synchronisation forte : on suppose que la synchronisation se fera automatiquement via la synchronisation des horloges sous-jacentes.
 \end{itemize}
 %TODO REVOIR ÇA Quand il n'y a pas de point d'interaction, le cas simultané n'offre pas d'avantages par rapport au cas compensé.
@@ -717,51 +729,58 @@ Le scénario~\ref{scenar.trigger-1} peut se résoudre de plusieurs manières.
 \end{itemize}
 
 \subsection{Déplacement avec interactivité : cas étendu}
-On prend ici le scénario~\ref{scenar.depl-interactif}, qui possède un \trigger, géré par le groupe B.
- 
-\begin{itemize}
-%	\item $T_e: A_\min \land D_\min$
-	\item $T_B: $ consensus du groupe sur l'expression B
-	\item $T_A: M_A$, $T_D: M_D$, $T_C: M_C$
-\end{itemize}
-
-Dans le cas asynchrone instantané, $M_A, M_D, M_C$ sont des messages qui vont déclencher les \trigger $T_A, T_D, T_C$ dès qu'ils sont reçus.
-
-Dans le cas synchrone instantané : les messages partent le plus tôt possible, mais $C$, $D$, ne peuvent se déclencher avant la fin de $A$.
-
-Dans le cas simultané, la structure est la même que dans le cas asynchrone non-ordonné. La différence est dans les messages qui sont envoyés : $M_A, M_D, M_C$ fixent la date à laquelle $T_A$, $T_D$, $T_C$ doivent partir.
-
-On notera qu'il serait possible d'exprimer des variantes plus fines : par exemple rendre simultanés les fins de $A,D$ mais pas le début de $C$. 
-Néanmoins, ce travail a pour objectif de ne pas encombrer le compositeur d'une finesse trop rarement nécessaire, en lui offrant un accès facile à des concepts de haut-niveau dont la nécessité est apparue lors des études de cas.
 
 \begin{figure}[h]
-	\centering
-		\begin{tikzpicture}
-		\input{scenarios/deplacement-interactif-source.tex}
-		\end{tikzpicture}
-		\captionof{scenario}{Un scénario possédant un \trigger que l'on veut répartir sur les clients des groupes $A,B,C,D$}
-	\label{scenar.depl-interactif}
+    \centering
+    \begin{tikzpicture}
+    \input{scenarios/deplacement-interactif-source.tex}
+    \end{tikzpicture}
+    \captionof{scenario}{Un scénario possédant un \trigger que l'on veut répartir sur les clients des groupes $G_{1,..,4}$}
+    \label{scenar.depl-interactif}
 \end{figure}
+
+On considère ici le scénario~\ref{scenar.depl-interactif}, qui possède un \trigger $T$, géré par le groupe $G_2$.
+ 
+ On note : 
+\begin{itemize}
+%	\item $T_e: A_\min \land D_\min$
+    \item $T_e $: Le \trigger qui marque le début de l'évalutation de l'expression de $T$.
+	\item $T_2 $: Le \trigger marquant le consensus sur l'expression de $T$.
+    \item $T_1 $: Le \trigger qui marque la fin de l'exécution de la contrainte de $G_1$. 
+    Est déclenché par $M_1$.
+    \item $T_4 $: Le \trigger qui marque la fin de l'exécution de la contrainte de $G_4$.
+    Est déclenché par $M_4$.
+    \item $T_3 $: Le \trigger qui marque le début de l'exécution de la contrainte de $G_3$.
+    Est déclenché par $M_3$.
+\end{itemize}
+
+Dans le cas asynchrone, en scénario~\ref{scenar.depl-interactif-async}, $M_1, M_3, M_4$ sont des messages qui vont déclencher les \triggers $T_1, T_3, T_4$ dès qu'ils sont reçus.
+
+Dans le cas synchrone, en scénario~\ref{scenar.depl-interactif-sync}, les messages partent le plus tôt possible, mais le déclenchement de $T_3$ implique la fin de l'exécution de $C_1$ et $C_4$. $T_3$ démarrera lorsque tous les messages $M_3$ auront été envoyés : son expression est une conjonction logique sur la réception de $M_{3_{1,..N}}$ avec $1,..N$ les groupes précédant $T$.
+
+Dans les cas compensé, la structure ne change pas. 
+Les messages envoyés changent : $M_1, M_3, M_4$ fixent la date à laquelle $T_1$, $T_3$, $T_4$ doivent partir de manière à ce qu'ils se déroulent en même temps.
+
+Il serait possible d'exprimer des variantes plus fines : par exemple rendre simultanés les fins de $C_1, C_4$ mais pas le début de $C_3$. 
+Néanmoins, ce travail n'a pas pour objectif d'encombrer le compositeur d'une finesse trop rarement nécessaire, en lui offrant un accès facile à des concepts de haut-niveau dont la nécessité est apparue lors des études de cas.
+
 
 \begin{figure}[h]
 	\centering
 		\begin{tikzpicture}
 		\input{scenarios/deplacement-interactif-async.tex}
-		\draw (4.4, 31.95) node {$M_A, M_D, M_C$};
 		\end{tikzpicture}
 		\captionof{scenario}{Répartition du scénario \ref{scenar.depl-interactif} dans le cas asynchrone instantané : les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $G_3$ s'arrêteront et démarreront sans ordre prévisible.}
+        \label{scenar.depl-interactif-async}
 \end{figure}
 
 \begin{figure}[h]
 	\centering
 		\begin{tikzpicture}
 		\input{scenarios/deplacement-interactif-sync.tex}
-		\draw (4.8, 32) node {$M_A$}; 
-		
-		\draw (3.2, 30.6905) node {$M_D$}; 
-		\draw (3.2, 29.1594) node {$M_C$}; 
 		\end{tikzpicture}
-		\captionof{scenario}{Répartition du scénario \ref{scenar.depl-interactif} dans le cas synchrone instantané: les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $G_3$ s'arrêteront dans l'ordre, avec un délai potentiel entre la fin de $A,D$ et le début de $G_3$.}
+		\captionof{scenario}{Répartition du scénario \ref{scenar.depl-interactif} dans le cas synchrone instantané: les contraintes associées aux groupes $G_1, G_4$ et la contrainte associée au groupe $G_3$ s'arrêteront dans l'ordre, avec un délai potentiel entre la fin de $G_1, G_4$ et le début de $G_3$.}
+        \label{scenar.depl-interactif-sync}
 \end{figure}
 %\subsection{Méchanismes de synchronisation}
 %- Cas possibles : 
@@ -771,38 +790,43 @@ Néanmoins, ce travail a pour objectif de ne pas encombrer le compositeur d'une 
 
 %* Synchronisation du début de la suite
 
-\section{Implémentation et évaluation}\label{sec.evaluation}
+\section{Implémentation}\label{sec.implementation}
 
-\subsection{Topologie}
-Le système présenté doit être agnostique à la topologie sous-jacente du réseau.
-Maître-esclave pour l'édition.
+Le système présenté en section précédente est agnostique à la topologie sous-jacente du réseau : on définit les messages qui doivent être envoyés et reçus, mais pas la manière dont ils transitent.
+%Maître-esclave pour l'édition.
 
-Pour des raisons de simplicité, la première mise en œuvre se fait via une topologie réseau en étoile : un maître gère le déroulement général de l'exécution. 
-Les différents clients communiquent au travers de ce maître, avec les avantages et inconvénients que cela implique : 
+La mise en œuvre, réalisée en C++ en tant que plug-in à i-score, est dite « de référence »~: l'objectif est de valider l'approche, sans chercher les performances maximales.
+Pour des raisons de simplicité, on choisit une topologie réseau en étoile : un maître gère le déroulement général de l'exécution. 
+Les différents clients communiquent au travers de ce maître pour les messages de balisage, avec les compromis que cela implique : 
 \begin{itemize}
-    \item Facilité d'analyse lors du développement : on peut enregistrer tous les messages échangés avec leurs estampilles.
+    \item Facilité d'analyse et de débogage lors du développement : on peut enregistrer tous les messages échangés avec leurs estampilles.
+    \item Simplicité du consensus : le maître prend la décision avec les informations envoyées par les clients, puis les informe.
     \item Intolérance aux pannes : si le maître faillit, aucune récupération n'est possible.
-    \item Latence non idéale : plus de messages sont échangés que si tous les clients communiquaient directement.
+    \item Latence non minimale : plus de messages sont échangés que si tous les clients communiquaient directement.
 \end{itemize}
 
-On détaille dans les sections suivantes les cas ou des topologies différentes peuvent montrer un intérêt.
+D'autres implémentations en mode pair-à-pair seraient possibles. 
+
+On utilise dans l'implémentation le protocole TCP pour tous les messages relatifs à la répartition, notamment pour ses garanties d'ordonnancement.
+En effet, il a été démontré qu'UDP seul était généralement peu fiable pour des messages de contrôle. 
+Des architectures plus complexes telles que le « Modèle Client-Serveur Généralisé » basées elles mêmes sur UDP peuvent néanmoins compenser l'absence de fiabilité\cite{mckinney2012oscthulhu}, tout en offrant de meilleures performances que TCP.
+
+Enfin, de manière générale, on repose sur une bonne synchronisation des horloges au niveau du système.
+L'algorithme d'exécution d'i-score compense en effet les délais à chaque tic si l'horloge système se resynchronise.
+Plus la synchronisation des horloges sera fine entre les clients et plus l'exécution se rapprochera de l'exécution théorique non répartie.
 
 %Pour l'exécution : dans certains cas deux clients peuvent échanger directement.
 %Il faut décrire ces cas.
 
 %Si groupes avec plusieurs clients : "group leader" ? responsable de la communication ? avoir un "plus court chemin" permanent ?
 
-\subsection{Modèle}
-i-score se base sur une approche orientée document.
+%\subsection{Modèle}
+%i-score se base sur une approche orientée document.
 
-On choisit de répartir nos objets autour d'un même document partagé par toutes les instances du réseau, 
-à la manière des logiciels d'édition tels que Google Docs. %CITE transfo opé
+%On choisit de répartir nos objets autour d'un même document partagé par toutes les instances du réseau, à la manière des logiciels d'édition tels que Google Docs. %CITE transfo opé
 
-Cela ne pose pas de problème de mémoire, même sur de l'embarqué tel que Raspberry Pi : l'empreinte mémoire d'un scénario est minime en comparaison de l'occupation des bibliothèques utilisées (quelques dizaines de kilo-octets contre environ 50 méga-octets).
+%Cela ne pose pas de problème de mémoire, même sur de l'embarqué tel que Raspberry Pi : l'empreinte mémoire d'un scénario est minime en comparaison de l'occupation des bibliothèques utilisées (quelques dizaines de kilo-octets contre environ 50 méga-octets).
 
-On utilise dans l'implémentation le protocole TCP pour tous les messages relatifs à la répartition, notamment pour ses garanties d'ordonnancement.
-En effet, il a été démontré qu'UDP seul était trop peu fiable pour des messages de contrôle. 
-Des architectures plus complexes telles que le «Modèle Client-Serveur Généralisé» basées elles mêmes sur UDP peuvent néanmoins compenser l'absence de fiabilité\cite{mckinney2012oscthulhu} en offrant de meilleures performances que TCP.
 
 % On suppose ici que les horloges des machines sont synchronisées, au moins via NTP.
 %\subsection{Répartition de l'édition}
@@ -812,19 +836,24 @@ Des architectures plus complexes telles que le «Modèle Client-Serveur Généra
 
 %- Pour l'édition temps-réel, on doit permettre d'appliquer des "filtres" (par exemple qui vont rajouter une sur-expression, etc)
 
-Enfin, de manière générale, on repose sur une bonne synchronisation des horloges au niveau du système.
-L'algorithme d'exécution d'i-score compense en effet les délais à chaque tic si l'horloge système se resynchronise.
-Plus la synchronisation des horloges sera fine entre les clients et plus l'exécution se rapprochera de l'exécution théorique non répartie.
+
+% \subsection{Évaluation}
+% - Comparaison de l'algorithme "simple" et de l'algorithme avec retard
 
 
-\subsection{Évaluation}
-- Comparaison de l'algorithme "simple" et de l'algorithme avec retard
-
-
-- Latence : prendre moyenne et écart-type sur les dix dernières valeurs ? Ou juste dernière valeur ?
-En LAN gigabit on est en général < à une milliseconde.
+% - Latence : prendre moyenne et écart-type sur les dix dernières valeurs ? Ou juste dernière valeur ? En LAN gigabit on est en général < à une milliseconde.
 
 \section{Conclusion}
+On présente une méthode pour répartir l'exécution de parties d'un scénario interactif basé sur le modèle \ossia sur différentes machines d'un réseau local. 
+L'objectif est d'offrir de nouvelles possibilités d'écriture au compositeur travaillant dans un environnement hétérogène, et comportant téléphones, cartes embarquées comme Raspberry Pi, et machines de bureau beaucoup plus puissantes.
+
+Les différentes possibilités de synchronisation des structures temporelles sont introduites. 
+D'abord au niveau d'un nœud temporel, en permettant divers degrés de cohésion avec la structure donnée par le compositeur, allant d'exécutions pas nécessairement simultanées mais avec une latence faible, à des exécutions avec une latence plus importante, mais permettant une plus grande simultanéité pour l'observateur.
+Puis au niveau d'un scénario, ou l'on considère les possibilités de partage qu'il peut y avoir entre plusieurs machines exécutant un même scénario : toutes en parallèle, certaines en série, etc.
+
+La suite de ce travail consistera à étendre les possibilités d'écriture pour inclure des informations d'interaction plus complexes.
+Par exemple, on souhaiterait pouvoir contrôler un paramètre tel que le volume d'un son en temps réel, en prenant en compte les interactions de plusieurs participants sur leur téléphone. 
+Des comportements tels que « prendre la valuer moyenne », « prendre la valeur la plus élevée » pourraient alors être introduits dans la palette à disposition de l'auteur.
 % Ouverture : 
 %\subsubsection{Comportements de groupes}
 %-> pourquoi ne pas avoir la même chose au niveau des mappings (et pour tout ce qui n'est pas fixé de manière générale ?)
@@ -834,6 +863,9 @@ En LAN gigabit on est en général < à une milliseconde.
 %Par exemple, si on possède un device spécial "network" avec l'arbre local de chaque "groupe", qui offre une couche d'abstraction au-dessus des méchanismes de consensus, on peut avoir des possibilités plus riches, telles que : l'expression $e_2$ est vraie si l'expression $e_1$ était vraie pour le groupe $G_2$ et fausse pour le groupe $A$.
 
 %Pour permettre plus de possibilités, on introduit la possibilité de réaliser des expressions qui réalisent un pattern-matching : \lstinline|network:/*/trigger == true|.
+
+\section{Remerciements}
+Les auteurs souhaitent remercier Serge Chaumette et Simon Archipoff pour leurs contributions.
 
 \printbibliography 
 \end{document}
