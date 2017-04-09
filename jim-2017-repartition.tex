@@ -20,7 +20,7 @@
 \usepackage[backend=biber]{biblatex}
 \usepackage{authblk}
 \addbibresource{biblio.bib}
-
+\graphicspath{scenarios}
 \setmainfont{Times New Roman}
 \setmonofont{Fira Code}
 \newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}   %% centered
@@ -60,22 +60,19 @@ Une implémentation est offerte dans le logiciel i-score, avec pour objectif de 
 
 \section{Introduction}
 On cherche à définir une sémantique permettant de décrire l'exécution d'une partition interactive sur plusieurs machines d'un réseau local, en prenant en compte les exécutions parallèles, c'est-à-dire que deux machines jouent ensemble, de manière synchronisée ou non, ainsi que les exécutions sérielles : une machine joue une partie, puis une autre joue la suite.
-
 On parle ici de « jeu » de manière abstraite~: on s'intéresse au contrôle de tous types de paramètres et non pas uniquement aux paramètres musicaux.
+Le contexte est celui des partitions interactives telles que définies dans le modèle graphique \ossia, présenté en~\cite{celerier2015ossia}. 
+Ses éléments caractéristiques seront brièvement rappelés en section~\cite{sec.rappel-ossia}.
 
 On présentera plusieurs applications et besoins rencontrés par des artistes et auteurs, qui ont motivé ce travail.
-
 À partir de ces besoins, on cherche à définir les ajustements nécessaires au modèle \ossia pour permettre d'exprimer le plus simplement possible des structures réparties dans une partition interactive.
-
 Une des premières questions est la nature de la synchronisation désirée entre les machines.
 Par exemple, des choix d'implémentation sont nécessaire en fonction de la précision désirée. 
 On s'impose de plus pour ce travail un fonctionnement sur du matériel grand public.
 
 Puis, les possibilités de répartition étudiées seront présentées, en analysant l'impact que peuvent avoir les problèmes connus dans le domaine de l'informatique répartie, sur l'écriture de telles partitions. 
 Notamment, on donnera différentes sémantiques possibles pour plusieurs éléments du modèle \ossia, qui permettent de répondre à des cas d'application distincts. 
-
 On considérera le partage d'information qu'il peut y avoir entre machines exécutant une même tâche en parallèle, et les différentes manières de synchroniser ces machines entre elles.
-
 Pour conclure, les détails d'une première implémentation seront présentés.
 
 %TODO notation graphique pour groupes, synchrone, asynchrone, etc... ?
@@ -151,10 +148,10 @@ On distingue notamment les applications ayant pour but de synchroniser des
 flux audio sur plusieurs machines, des applications permettant une collaboration lors 
 de l'écriture et de la composition musicale.
 
-Dans le premier cas, on notera principalement les multiples incarnations de NetJack\cite{carot2009netjack}, 
+Dans le premier cas, on notera principalement les multiples incarnations du serveur de son NetJack\cite{carot2009netjack}, 
 ayant pour but de rendre accessible les éléments d'une baie de raccordement Jack sur plusieurs machines. 
 Ce sont des extensions maître-esclave de Jack qui permettent à une machine d'envoyer un flux audio ou MIDI sur une autre en branchant un câble virtuel.
-Un recensement plus complet des serveurs de son distribués ayant pour but les performances musicales en réseau est donné dans~\cite{carot2007networked}. 
+Carôt présente dans~\cite{carot2007networked} un recensement plus complet des serveurs de son adaptés au jeu musical réparti.
 
 Différents logiciels permettant une écriture collaborative, mais non synchronisée, existent : 
 Ohm Studio\cite{koszolko2015crowdsourcing} reprend le principe des séquenceurs traditionnels et permet un partage de document à plusieurs utilisateurs, sur internet.
@@ -288,7 +285,7 @@ Il consiste en un agencement d'éléments permettant de définir des comportemen
 Les éléments dont nous avons besoin ici sont : 
 \begin{itemize}
 	\item \vocab{Contrainte temporelle} : décrit un écoulement de temps. 
-    Représenté par un trait horizontal. 
+    Représenté par un trait horizontal. Les contraintes temporelles peuvent être fixes (trait plein) ou souples (trait pointillé), auquel cas leur exécution peut être interrompue par un évènement externe.
 	\item \vocab{Nœud temporel} : synchronise le début et la fin de plusieurs contraintes temporelles. Représenté par un trait vertical.
 	Peut porter un \vocab{point d'interaction}, qui décrit l'attente et la résolution d'une condition externe pour stopper les contraintes précédentes et démarrer les suivantes; les contraintes précédentes seront alors en partie représentées par des pointillés pour exprimer l'incertitude sur leur date de fin. 
     Cette incertitude peut être bornée par des dates d'exécution minimales et maximales.
@@ -299,6 +296,14 @@ Les éléments dont nous avons besoin ici sont :
 	\item \vocab{État} : permet d'envoyer un message à un temps donné. Représenté par un point.
 \end{itemize}
 Des exemples sont visibles en section~\ref{sec.description}, par exemple les scénarios~\ref{scenar.hierarchy} et~\ref{scenar.general}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.45\textwidth]{scenarios/iscore-example.eps}
+    \caption{Éléments du modèle \ossia.}
+    \label{fig.ossia}
+\end{figure}
+
 %\subsubsection{Répartition à l'édition}
 
 \subsection{Nouvelles notions}
