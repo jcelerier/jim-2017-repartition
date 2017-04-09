@@ -19,6 +19,8 @@
 \usepackage{placeins}
 \usepackage[backend=biber]{biblatex}
 \usepackage{authblk}
+\usepackage{enumitem}\setlist{nosep}
+\setitemize{itemsep=1pt}
 \addbibresource{biblio.bib}
 \graphicspath{scenarios}
 \setmainfont{Times New Roman}
@@ -27,6 +29,7 @@
 \newcolumntype{R}[1]{>{\raggedright\arraybackslash}m{#1}}  %% right aligned
 \newcolumntype{L}[1]{>{\raggedleft\arraybackslash}m{#1}}  %% right aligned
 
+\usetikzlibrary{arrows,automata}
 \newcommand\timenode{nœud temporel\xspace}
 \newcommand\trigger{point d'interaction\xspace}
 \newcommand\triggers{points d'interaction\xspace}
@@ -67,7 +70,7 @@ Ses éléments caractéristiques seront brièvement rappelés en section~\cite{s
 On présentera plusieurs applications et besoins rencontrés par des artistes et auteurs, qui ont motivé ce travail.
 À partir de ces besoins, on cherche à définir les ajustements nécessaires au modèle \ossia pour permettre d'exprimer le plus simplement possible des structures réparties dans une partition interactive.
 Une des premières questions est la nature de la synchronisation désirée entre les machines.
-Par exemple, des choix d'implémentation sont nécessaire en fonction de la précision désirée. 
+Par exemple, des choix d'implémentation sont nécessaires en fonction de la précision désirée. 
 On s'impose de plus pour ce travail un fonctionnement sur du matériel grand public.
 
 Puis, les possibilités de répartition étudiées seront présentées, en analysant l'impact que peuvent avoir les problèmes connus dans le domaine de l'informatique répartie, sur l'écriture de telles partitions. 
@@ -296,12 +299,12 @@ Les éléments dont nous avons besoin ici sont :
 	\item \vocab{Processus} : contenu dans les contraintes temporelles, permet l'exécution d'un comportement à chaque tic d'horloge. Par exemple, une automation.
 	\item \vocab{État} : permet d'envoyer un message à un temps donné. Représenté par un point.
 \end{itemize}
-Des exemples sont visibles en section~\ref{sec.description}, par exemple les scénarios~\ref{scenar.hierarchy} et~\ref{scenar.general}.
+La figure~\ref{fig.ossia} présente les différents éléments.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.45\textwidth]{scenarios/iscore-example.eps}
-    \caption{Éléments du modèle \ossia.}
+    \caption{Éléments du modèle \ossia dans un scénario simple. L'exécution se déroule de la manière suivante: la contrainte $A$ s'exécute pendant une durée déterminée et fixe. À sa fin, une condition est évaluée: si elle est fausse, la branche contenant $B$ ne s'exécutera pas. Sinon, au bout d'un certain temps, son écoulement arrive à une zone souple centrée sur un point d'interaction. Si une interaction a lieu, $B$ s'arrête et $D$ démarre. S'il n'y en a pas, $D$ démarre lorsque la borne maximale de $B$ est atteinte. Comme à la suite de $A$, une condition définit si oui ou non $G$ s'exécutera. Dans tous les cas, $C$ a commencé à s'exécuter suite à $A$. $C$ attend une interaction, sans time-out. Si l'interaction arrive, les deux conditions suivant $C$ sont évaluées; la valeur de vérité de chacune décidera de l'exécution de $E$ et $F$. }
     \label{fig.ossia}
 \end{figure}
 
@@ -311,7 +314,8 @@ Des exemples sont visibles en section~\ref{sec.description}, par exemple les sc�
 Nous nous trouvons en présence de plusieurs ordinateurs qui communiquent et partagent une même structure de donnée : un document.
 L'ensemble constitué par les instances d'i-score et le document qu'elles partagent est appelé \vocab{session}.
 
-On désigne par \vocab{client} une instance d'i-score connectée à une session, qui peut être sur une machine différente.
+On désigne par \vocab{client} une instance d'i-score connectée à une session. 
+La machine physique ou a lieu l'exécution de cette instance n'est pas spécifiée.
 
 On désire s'affranchir des notions propres aux machines physiques et des problématiques de réseau, telles que adresses IP, ports des machines, lors de l'écriture d'un scénario réparti. 
 
@@ -411,12 +415,13 @@ On dénote trois manières de partager l'information dans un scénario :
 \begin{itemize}
     \item Aucun partage : Les clients associés à ce processus l'exécutent tous de manière indépendante.
     Les autres ne l'exécutent pas. 
-    Si par exemple on assigne le groupe $G_1$ au scénario~\ref{scenar.general}, tous les clients de $G_1$ vont exécuter toutes les contraintes temporelles et évaluer toutes les expressions, sans communiquer entre eux sur leurs résultats. 
-    Par exemple, pour deux clients de $G_1$, le \trigger pourra se déclencher à des instants différents, et la condition pourra avoir une valeur différente.
+    Si par exemple le groupe $G_1$ est assigné au scénario~\ref{scenar.general}, tous les clients de $G_1$ exécuteront toutes les contraintes temporelles et évalueront toutes les expressions, sans communiquer entre eux sur leurs résultats. 
+    Ainsi, pour deux clients de $G_1$, le \trigger pourra se déclencher à des instants différents, et la condition pourra avoir une valeur de vérité différente.
     
-    Dans ce cas, les annotations de groupes assignés aux objets du scénario sont récursivement ignorés. 
-    Puisque chaque exécution va avoir des temps d'exécution différents pour chaque point d'interaction, il ne peut pas y avoir de synchronisation.
-    La seule politique d'exécution qui pourrait faire sens serait que le premier client à valider un \trigger dans un scénario non partagé avertirait les clients suivants.
+    La répartition ne peut dans ce cas fonctionner de manière hiérarchique: chaque exécution sur chaque client aura des temps d'exécution différents pour chaque point d'interaction. 
+    Il ne peut donc pas y avoir de synchronisation.
+    Les annotations de groupes qui auraient pu être assignées aux objets du scénario sont ignorées. 
+    %La seule politique d'exécution qui pourrait faire sens serait que le premier client à valider un \trigger dans un scénario non partagé avertirait les clients suivants.
     
     Ce cas est utile pour des sous-scénarios dont plusieurs participants à une installation artistique font une expérience partagée, tout en gardant une trame générale de plus haut niveau. 
     Typiquement, on peut imaginer ce cas pour une application mobile.
@@ -456,14 +461,14 @@ On dénote trois manières de partager l'information dans un scénario :
     \item Mixte : il peut y avoir plusieurs lignes temporelles appartenant à différents groupes dans un même scénario. 
     Ces lignes peuvent ensuite se resynchroniser à un instant donné. 
     
-    On considère le graphe dont les nœuds temporels sont les sommets et les contraintes temporelles sont les arêtes.
-    Les lignes temporelles sont les sous-graphes connexes de ce graphe, telles que les contraintes et les nœuds soient associés au même groupe.
+    On considère le graphe acyclique non orienté dont les nœuds temporels sont les sommets et les contraintes temporelles sont les arêtes. 
+    Les lignes temporelles sont les ensembles de contraintes et nœuds connexes de ce graphe, tels que tous les éléments d'un tel ensemble soient associés au même groupe.
     
     Les annotations donnent l'emplacement d'exécution des contraintes, des processus, et de vérification des expressions. 
 %    Un client ne sait pas à l'avance si il va pouvoir se déclencher ou non. 
     
     Considérons le scénario~\ref{scenar.twobranches}. 
-    La différence avec le cas du partage complet tient dans le fait que seuls les clients appartenant au groupe $G_1$ vont exécuter la branche du haut.
+    La différence avec le cas du partage complet tient dans le fait que seuls les clients appartenant au groupe $G_1$ vont exécuter la branche du haut $C_0, T_1, C_2$.
     Ils peuvent ou non avoir l'obligation de se synchroniser entre eux. 
     Il faut alors qu'une synchronisation ait lieu pour tous les clients appartenant à $G_1$ et $G_2$ lors du dernier \trigger, situé à droite.
     
@@ -471,9 +476,29 @@ On dénote trois manières de partager l'information dans un scénario :
     
     \begin{figure}[h]
         \centering
-        \begin{tikzpicture}
-        \input{scenarios/twobranches.tex}
+        \begin{subfigure}{0.45\textwidth}\centering
+            \begin{tikzpicture}
+            \input{scenarios/twobranches.tex}
+            \end{tikzpicture}
+            \caption{Scénario écrit par le compositeur}
+        \end{subfigure}
+    
+    \begin{subfigure}{0.45\textwidth}\centering
+        \begin{tikzpicture}[scale = 0.4,shorten >=1pt,auto,node distance=2 cm]        
+        \small
+         \node[state,inner sep=1pt, minimum size=0pt] (T0) {$T_0$};
+         \node[state,inner sep=1pt, minimum size=0pt] (T1)[above right of=T0] {$T_1$};
+         \node[state,inner sep=1pt, minimum size=0pt] (T2)[below right of=T0] {$T_2$};
+         \node[state,inner sep=1pt, minimum size=0pt] (T3)[above right of=T2] {$T_3$};
+         
+         \path (T0) edge[left] node {$C_0$} (T1);
+         \path (T0) edge[left] node {$C_1$} (T2);
+         \path (T1) edge[left] node {$C_2$} (T3);
+         \path (T2) edge[left] node {$C_3$} (T3);
         \end{tikzpicture}
+        \caption{Graphe correspondant}
+    \end{subfigure}
+
         \captionof{scenario}{Deux branches exécutées chacunes par un groupe différent.}
         \label{scenar.twobranches}
     \end{figure}
@@ -487,9 +512,9 @@ On dénote trois manières de partager l'information dans un scénario :
 
 \subsubsection{Cas non-interactif}
 % Cas principalement développé dans rapport de master
-On peut utiliser les méthodes de synchronisation décrites précédemment, mais il est possible d'étendre le mode compensé. 
+Si l'écriture de scénarios est restreinte à des constructions non-interactives, il est possible d'optimiser le mode compensé décrit précédemment. 
 
-Comme on connait les dates effectives auxquelles les objets sont sensés s'exécuter, il est possible de les fixer à l'avance sur chaque client. 
+Comme les dates effectives auxquelles les objets sont sensés s'exécuter sont connues, il est possible de les fixer à l'avance sur chaque client. 
 Un parcours de graphe permet d'obtenir une estimation des dates minimales auxquelles il sera possible de fixer des dates d'exécutions des éléments suivant un point d'interaction donné. 
 Cette méthode est notamment développée dans~\cite{celerier2016rethinking}.
 
@@ -773,7 +798,7 @@ Néanmoins, ce travail n'a pas pour objectif d'encombrer le compositeur d'une fi
 		\begin{tikzpicture}
 		\input{scenarios/deplacement-interactif-async.tex}
 		\end{tikzpicture}
-		\captionof{scenario}{Répartition du scénario \ref{scenar.depl-interactif} dans le cas asynchrone instantané : les contraintes associées aux groupes $A,D$ et la contrainte associée au groupe $G_3$ s'arrêteront et démarreront sans ordre prévisible.}
+		\captionof{scenario}{Répartition du scénario \ref{scenar.depl-interactif} dans le cas asynchrone instantané : les contraintes associées aux groupes $G_1,G_4$ et la contrainte associée au groupe $G_3$ s'arrêteront et démarreront sans ordre prévisible.}
         \label{scenar.depl-interactif-async}
 \end{figure}
 
@@ -869,6 +894,7 @@ Des comportements tels que « prendre la valeur moyenne », « prendre la valeur
 
 \section{Remerciements}
 Les auteurs souhaitent remercier Serge Chaumette et Simon Archipoff pour leurs contributions.
-
+Ce travail a été supporté par le SCRIME (Studio de Cr\'eation et de Recherche en Informatique et Musiques Exp\'erimentales, \url{scrime.labri.fr}). Le SCRIME est financé par le ministère français de la Culture.
+Ce travail a été supporté par la convention ANRT CIFRE 1181-2014 avec la société Blue Yeti. 
 \printbibliography 
 \end{document}
