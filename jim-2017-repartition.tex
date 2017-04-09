@@ -114,7 +114,7 @@ Actuellement, une des manières principales d'utiliser le logiciel i-score est d
 Néanmoins, pour des applications embarquées, par exemple sur Raspberry Pi, cela peut avoir les conséquences suivantes~: 
 \begin{itemize}
     \item Encombrement de la bande passante : certains périphériques ne sont pas en Gigabit Ethernet; envoyer des quantités importantes de messages OSC sur des intervalles de quelques millisecondes va entraîner des pertes de paquets, des retards, et une augmentation de la latence.
-    \item Gigue\footnote{De l'anglais \textit{jitter}} sur les messages envoyés qui peut entraîner des effets indésirables comme des tremblements si par exemple on fait se déplacer des objets graphiques par réseau.
+    \item Gigue\footnote{De l'anglais «\textit{jitter}»} sur les messages envoyés qui peut entraîner des effets indésirables comme des tremblements si par exemple on fait se déplacer des objets graphiques par réseau.
     \item Consommation superflue de ressources pour le décodage des messages réseaux.
 \end{itemize}
 
@@ -175,12 +175,13 @@ La littérature sur les systèmes distribués distingue plusieurs familles d'hor
 Les deux principales méthodes pour la synchronisation d'horloges physiques sont \emph{Network Time Protocol}\cite{mills1991internet} et \emph{Precision Time Protocol}\cite{peng2009research}. 
 NTP est disponible sur de nombreuses plate-formes et permet en pratique d'atteindre une précision de synchronisation de quelques milliseconde sur internet. 
 PTP est plus précis et promet une précision proche de la microseconde. 
-Cependant, cela dépend de la précision avec laquelle les paquets sont estampillés\footnote{timestamped} et donc de la qualité de l'horloge de l'implémentation PTP. 
+Cependant, cela dépend de la précision avec laquelle les paquets sont estampillés\footnote{De l'anglais «\textit{timestamped}»} et donc de la qualité de l'horloge de l'implémentation PTP. 
 En pratique, l'intérêt de PTP sera plus prononcé lorsque du matériel dédié et onéreux (\emph{Grand Master Clock}) est disponible pour réaliser l'estampillage des paquets.
 
 On rappelle qu'une horloge monotone a pour caractéristique de toujours progresser vers l'avant. 
-Un des désavantages de l'utilisation des horloges physiques pour l'estampillage est qu'elles ne sont pas monotones. 
-Par exemple, les secondes intercalaires bouleversent régulièrement les systèmes distribués basés sur les horloges physiques.
+Un des désavantages de l'utilisation des horloges physiques pour l'estampillage est qu'elles ne sont pas monotones; elles peuvent être soumises aux réajustements de l'heure système, et aux secondes interacalaires. 
+Les secondes intercalaires sont des secondes introduites ou supprimées régulièrement\footnote{La dernière a été par exemple introduite le 31 décembre 2016 après 23h59 et 59 secondes} dans les systèmes d'heures légaux pour pallier à la divergence entre la rotation terrestre et l'heure UTC obtenue par la mesure de la fréquence de résonance des atomes de césium, qui permet de définir précisément la durée d'une seconde. 
+Leur introduction bouleverse régulièrement les systèmes distribués basés sur les horloges physiques: il est possible que deux appels successifs aux fonctions système donnant l'heure civile renvoient des dates dans l'ordre inverse que celui attendu, ce qui rend les calculs de durées incorrects.
 
 Les horloges logiques ont été introduites par Leslie Lamport~\cite{lamport1978time} afin d'offrir des possibilités de raisonnement et de vérification formelles sur l'écoulement du temps dans les systèmes répartis.
 En particulier, les estampilles de Lamport permettent d'offrir un ordre partiel entre les messages échangés dans un système réparti.
@@ -440,13 +441,13 @@ On dénote trois manières de partager l'information dans un scénario :
         \begin{tabular}{L{3.5em}R{0.3\textwidth}}
             Racine: & \begin{tikzpicture}
             \input{scenarios/hierarchy.tex}
-            \end{tikzpicture} \\
-            $S_1$: & \begin{tikzpicture}[scale=0.4, every node/.style={scale=0.6}]
+            \begin{scope}[scale=0.4,shift={(0,-5.5)}]
             \input{scenarios/hierar-sub.tex}
-            \end{tikzpicture} \\
-            $S_2$: & \begin{tikzpicture}[scale=0.6, every node/.style={scale=0.6}]
+            \end{scope}
+            \begin{scope}[scale=0.6,shift={(3.73,-7)}]
             \input{scenarios/hierar-sub-2.tex}
-            \end{tikzpicture} \\
+            \end{scope}
+            \end{tikzpicture}
         \end{tabular}
         \captionof{scenario}{Deux contraintes possédant chacune un scénario hiérarchique}
         \label{scenar.hierarchy}
@@ -583,7 +584,7 @@ Une approche possible mais non considérée dans ce travail serait de réaliser 
 
 Le maître s'exécute avec une horloge physique.
 À chaque tic, il envoie à tous les clients la date à laquelle ils doivent exécuter leur propre tic. 
-Quand les clients reçoivent ce message, ils appliquent une attente active\footnote{\textit{busy wait}} jusqu'à ce que l'exécution du tic prenne place.
+Quand les clients reçoivent ce message, ils appliquent une attente active\footnote{De l'anglais «\textit{busy wait}»: le programme boucle jusqu'à ce qu'une condition de déclenchement soit validée.} jusqu'à ce que l'exécution du tic prenne place.
 % TODO faire quelques phrases sur une possible répartition bas-niveau asservie : dans ce cas, on a un maître qui 'tick' régulièrement ; les esclaves réagissent à ce tick en faisant un busy wait jusqu'à la date à laquelle ils doivent s'exécuter.
 \subsection{Récapitulatif}
 On introduit une notion de client (potentiellement une machine physique) et de groupe.
