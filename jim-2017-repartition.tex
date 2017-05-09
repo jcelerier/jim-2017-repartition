@@ -65,7 +65,7 @@ Une implémentation est offerte dans le logiciel i-score, avec pour objectif de 
 On cherche à définir une sémantique permettant de décrire l'exécution d'une partition interactive sur plusieurs machines d'un réseau local, en prenant en compte les exécutions parallèles, c'est-à-dire que deux machines jouent ensemble, de manière synchronisée ou non, ainsi que les exécutions sérielles : une machine joue une partie, puis une autre joue la suite.
 On parle ici de « jeu » de manière abstraite~: on s'intéresse au contrôle de tous types de paramètres et non pas uniquement aux paramètres musicaux.
 Le contexte est celui des partitions interactives telles que définies dans le modèle graphique \ossia, présenté en~\cite{celerier2015ossia}. 
-Ses éléments caractéristiques seront brièvement rappelés en section~\cite{sec.rappel-ossia}.
+Ses éléments caractéristiques seront brièvement rappelés en section~\ref{sec.rappel-ossia}.
 
 On présentera plusieurs applications et besoins rencontrés par des artistes et auteurs, qui ont motivé ce travail.
 À partir de ces besoins, on cherche à définir les ajustements nécessaires au modèle \ossia pour permettre d'exprimer le plus simplement possible des structures réparties dans une partition interactive.
@@ -114,7 +114,7 @@ Ce projet permet d'exhiber plusieurs besoins importants :
 \subsubsection{Support des périphériques embarqués}
 Actuellement, une des manières principales d'utiliser le logiciel i-score est de lui faire faire du contrôle par réseau. 
 
-Néanmoins, pour des applications embarquées, par exemple sur Raspberry Pi, cela peut avoir les conséquences suivantes~: 
+Néanmoins, pour des applications embarquées comme sur Raspberry Pi, cela peut avoir les conséquences suivantes~: 
 \begin{itemize}
     \item Encombrement de la bande passante : certains périphériques ne sont pas en Gigabit Ethernet; envoyer des quantités importantes de messages OSC sur des intervalles de quelques millisecondes va entraîner des pertes de paquets, des retards, et une augmentation de la latence.
     \item Gigue\footnote{De l'anglais «\textit{jitter}»} sur les messages envoyés qui peut entraîner des effets indésirables comme des tremblements si par exemple on fait se déplacer des objets graphiques par réseau.
@@ -151,8 +151,7 @@ On distingue notamment les applications ayant pour but de synchroniser des
 flux audio sur plusieurs machines, des applications permettant une collaboration lors 
 de l'écriture et de la composition musicale.
 
-Dans le premier cas, on notera principalement les multiples incarnations du serveur de son NetJack\cite{carot2009netjack}, 
-ayant pour but de rendre accessible les éléments d'une baie de raccordement Jack sur plusieurs machines. 
+Dans le premier cas, on notera principalement les multiples incarnations du serveur de son NetJack\cite{carot2009netjack} qui ont pour but de rendre accessible les éléments d'une baie de raccordement Jack sur plusieurs machines. 
 Ce sont des extensions maître-esclave de Jack qui permettent à une machine d'envoyer un flux audio ou MIDI sur une autre en branchant un câble virtuel.
 Carôt présente dans~\cite{carot2007networked} un recensement plus complet des serveurs de son adaptés au jeu musical réparti.
 
@@ -163,6 +162,8 @@ Splice\cite{pignato2015deterritorialized} suit le même principe, mais est orien
 Enfin, il existe une famille importante d'outils orientés vers l'improvisation musicale répartie en temps réel\cite{mills2010dislocated}. 
 On citera notamment NINJAM\footnote{\url{http://ninjam.com}} et eJamming\footnote{\url{http://www.ejamming.com/}}.
 
+L'objectif de ce travail est d'offrir une écriture de la répartition dans le temps: par exemple, les logiciels tels que Ohm Studio supposent 
+que chaque ordinateur va exécuter la même pièce; on veut permettre de spécifier plus précisément la partition que va exécuter chaque machine. 
 %\subsubsection{Lien entre la répartition à l'édition et la répartition à l'exécution}
 
 \subsection{Horloges}
@@ -170,8 +171,8 @@ En raison de la nature temporelle du problème présenté, on s'intéresse aux m
 
 La littérature sur les systèmes distribués distingue plusieurs familles d'horloges : 
 \begin{itemize}
-    \item Les horloges physiques marquent l'avancement du temps dans le monde matériel.
-    \item Les horloges logiques marquent l'avancement du temps dans les étapes d'un algorithme réparti, donc sans relation avec du temps en secondes.
+    \item Physiques : elles marquent l'avancement du temps dans le monde matériel.
+    \item Logiques : elles marquent l'avancement du temps dans les étapes d'un algorithme réparti, donc sans relation avec du temps en secondes.
     \item Les horloges hybrides ont été récemment introduites afin de concilier ces deux familles.
 \end{itemize}
 
@@ -182,12 +183,12 @@ Cependant, cela dépend de la précision avec laquelle les paquets sont estampil
 En pratique, l'intérêt de PTP sera plus prononcé lorsque du matériel dédié et onéreux (\emph{Grand Master Clock}) est disponible pour réaliser l'estampillage des paquets.
 
 On rappelle qu'une horloge monotone a pour caractéristique de toujours progresser vers l'avant. 
-Un des désavantages de l'utilisation des horloges physiques pour l'estampillage est qu'elles ne sont pas monotones; elles peuvent être soumises aux réajustements de l'heure système, et aux secondes interacalaires. 
+Un des désavantages de l'utilisation des horloges physiques pour l'estampillage est qu'elles ne sont pas monotones. Elles sont soumises aux réajustements de l'heure système, et aux secondes interacalaires. 
 Les secondes intercalaires sont des secondes introduites ou supprimées régulièrement\footnote{La dernière a été par exemple introduite le 31 décembre 2016 après 23h59 et 59 secondes} dans les systèmes d'heures légaux pour pallier à la divergence entre la rotation terrestre et l'heure UTC obtenue par la mesure de la fréquence de résonance des atomes de césium, qui permet de définir précisément la durée d'une seconde. 
 Leur introduction bouleverse régulièrement les systèmes distribués basés sur les horloges physiques: il est possible que deux appels successifs aux fonctions système donnant l'heure civile renvoient des dates dans l'ordre inverse que celui attendu, ce qui rend les calculs de durées incorrects.
 
-Les horloges logiques ont été introduites par Leslie Lamport~\cite{lamport1978time} afin d'offrir des possibilités de raisonnement et de vérification formelles sur l'écoulement du temps dans les systèmes répartis.
-En particulier, les estampilles de Lamport permettent d'offrir un ordre partiel entre les messages échangés dans un système réparti.
+Les horloges logiques ont été introduites par Lamport dans~\cite{lamport1978time} afin d'offrir des possibilités de raisonnement et de vérification formelles sur l'écoulement du temps dans les systèmes répartis.
+Les estampilles de Lamport donnent un ordre partiel entre les messages échangés dans un système réparti.
 
 Ce mécanisme a été par la suite généralisé, d'abord par les horloges vectorielles, puis par les horloges matricielles. 
 Dans le premier cas, chaque message contient un tableau contenant l'horloge de son émetteur ainsi que les horloges connues des autres processus. Dans le second cas, chaque message contient le vecteur contenant les vecteurs d'horloges de chaque processus.
@@ -283,14 +284,14 @@ On prendra garde à ne pas confondre ce travail avec la forme de répartition qu
 
 %Détailler les implications des choix par rapport au théorême CAP et PACELT.
 
-\subsection{Rappel du modèle}
+\subsection{Rappel du modèle}\label{sec.rappel-ossia}
 On s'intéresse à la problématique de répartition dans le cadre du logiciel i-score, qui implémente le modèle \ossia\cite{celerier2015ossia} pour les partitions interactives.
 Il consiste en un agencement d'éléments permettant de définir des comportements temporels. 
 Les éléments dont nous avons besoin ici sont : 
 \begin{itemize}
 	\item \vocab{Contrainte temporelle} : décrit un écoulement de temps. 
-    Représenté par un trait horizontal. Les contraintes temporelles peuvent être fixes (trait plein) ou souples (trait pointillé), auquel cas leur exécution peut être interrompue par un évènement externe.
-	\item \vocab{Nœud temporel} : synchronise le début et la fin de plusieurs contraintes temporelles. Représenté par un trait vertical.
+    Est représentée par un trait horizontal. Les contraintes temporelles peuvent avoir des sections fixes (en trait plein) ou souples (en trait pointillé), auquel cas leur exécution peut être interrompue par un évènement externe.
+	\item \vocab{Nœud temporel} : synchronise le début et la fin de plusieurs contraintes temporelles. Est représenté par un trait vertical.
 	Peut porter un \vocab{point d'interaction}, qui décrit l'attente et la résolution d'une condition externe pour stopper les contraintes précédentes et démarrer les suivantes; les contraintes précédentes seront alors en partie représentées par des pointillés pour exprimer l'incertitude sur leur date de fin. 
     Cette incertitude peut être bornée par des dates d'exécution minimales et maximales.
     La condition prend la forme d'une expression logique entre paramètres de la partition. Par exemple, 
@@ -299,7 +300,7 @@ Les éléments dont nous avons besoin ici sont :
 	\item \vocab{Processus} : contenu dans les contraintes temporelles, permet l'exécution d'un comportement à chaque tic d'horloge. Par exemple, une automation.
 	\item \vocab{État} : permet d'envoyer un message à un temps donné. Représenté par un point.
 \end{itemize}
-La figure~\ref{fig.ossia} présente les différents éléments.
+La figure~\ref{fig.ossia} présente la représentation des différents éléments.
 
 \begin{figure}[h]
     \centering
@@ -307,9 +308,7 @@ La figure~\ref{fig.ossia} présente les différents éléments.
     \caption{Éléments du modèle \ossia dans un scénario simple. L'exécution se déroule de la manière suivante: la contrainte $A$ s'exécute pendant une durée déterminée et fixe. À sa fin, une condition est évaluée: si elle est fausse, la branche contenant $B$ ne s'exécutera pas. Sinon, au bout d'un certain temps, son écoulement arrive à une zone souple centrée sur un point d'interaction. Si une interaction a lieu, $B$ s'arrête et $D$ démarre. S'il n'y en a pas, $D$ démarre lorsque la borne maximale de $B$ est atteinte. Comme à la suite de $A$, une condition définit si oui ou non $G$ s'exécutera. Dans tous les cas, $C$ a commencé à s'exécuter suite à $A$. $C$ attend une interaction, sans time-out. Si l'interaction arrive, les deux conditions suivant $C$ sont évaluées; la valeur de vérité de chacune décidera de l'exécution de $E$ et $F$. }
     \label{fig.ossia}
 \end{figure}
-
-%\subsubsection{Répartition à l'édition}
-
+\vspace{-0.5cm}
 \subsection{Nouvelles notions}
 Nous nous trouvons en présence de plusieurs ordinateurs qui communiquent et partagent une même structure de donnée : un document.
 L'ensemble constitué par les instances d'i-score et le document qu'elles partagent est appelé \vocab{session}.
@@ -317,7 +316,7 @@ L'ensemble constitué par les instances d'i-score et le document qu'elles partag
 On désigne par \vocab{client} une instance d'i-score connectée à une session. 
 La machine physique ou a lieu l'exécution de cette instance n'est pas spécifiée.
 
-On désire s'affranchir des notions propres aux machines physiques et des problématiques de réseau, telles que adresses IP, ports des machines, lors de l'écriture d'un scénario réparti. 
+On désire s'affranchir des notions liées aux machines physiques et des problématiques propres aux connections réseau (telles que adresses IP, ports des machines\dots), lors de l'écriture d'un scénario réparti. 
 
 Pour ce faire, la notion de \vocab{groupe} est introduite. 
 Un groupe est un ensemble de clients auxquels les mêmes objectifs d'exécution sont assignés.
@@ -325,10 +324,9 @@ Les compositeurs ne manipulent jamais directement les informations relatives à 
 
 De manière générale, quand plusieurs clients font partie d'un même groupe, cela signifie qu'ils vont réaliser les mêmes tâches, à des degrés de synchronisation variables.
 
-Un des intérêts de cette approche est la tolérance aux pannes, déconnections, reconnections, et changements d'installation. 
+Un des intérêts de cette approche est la tolérance aux pannes, déconnections, reconnections, et changements inopinés de fiches techniques. 
 Par exemple, si une machine tombe en panne, il est possible de la remplacer par une autre simplement en l'assignant au même groupe que la machine en panne 
 sans avoir besoin de mettre à jour le scénario.
-
 
 \begin{figure}[h]
 	\centering
@@ -336,8 +334,7 @@ sans avoir besoin de mettre à jour le scénario.
 	\caption{Plusieurs groupes hétérogènes $G_1,G_2,G_3$.}
 	\label{img.groupes}
 \end{figure}
-
-
+\vspace{-0.5cm}
 \section{Description de l'exécution}\label{sec.description}
 On sépare les objets offrant une structure temporelle, des objets possédant des données et commandes envoyées à d'autres logiciels (par exemple, une automation).
 
@@ -369,7 +366,7 @@ On pourra supposer que les contraintes temporelles portent chacune des processus
 Dans le modèle \ossia, le nœud temporel est l'objet permettant de synchroniser le début et la fin de plusieurs structures temporelles. 
 Nous analysons d'abord les choix qui doivent être fait pour traduire ce mécanisme dans le cas réparti, puis étudions l'impact sur le processus scénario dans son ensemble en présentant les politiques de répartition de haut niveau.
 \subsubsection{Modes de synchronisation}
-Il est difficile d'offrir une synchronisation forte, par exemple avec une précision d'une milliseconde, dans un système réparti\cite{sheehy2015there}. 
+Offrir une synchronisation forte dans un système réparti, par exemple avec une précision d'une milliseconde, est un problème difficile\cite{sheehy2015there}. 
 Une contrainte additionnelle que l'on s'impose est le fonctionnement du système sur du matériel grand public. 
 Ce matériel ne supportera pas toujours des fonctionnalités telles que Ethernet synchrone\cite{ferrant2008synchronous} ou PTP.
 
@@ -418,7 +415,7 @@ On dénote trois manières de partager l'information dans un scénario :
     Si par exemple le groupe $G_1$ est assigné au scénario~\ref{scenar.general}, tous les clients de $G_1$ exécuteront toutes les contraintes temporelles et évalueront toutes les expressions, sans communiquer entre eux sur leurs résultats. 
     Ainsi, pour deux clients de $G_1$, le \trigger pourra se déclencher à des instants différents, et la condition pourra avoir une valeur de vérité différente.
     
-    La répartition ne peut dans ce cas fonctionner de manière hiérarchique: chaque exécution sur chaque client aura des temps d'exécution différents pour chaque point d'interaction. 
+    La répartition ne peut dans ce cas fonctionner de manière hiérarchique: chaque exécution sur chaque client aura des temps d'exécution différents pour chacuns des points d'interaction. 
     Il ne peut donc pas y avoir de synchronisation.
     Les annotations de groupes qui auraient pu être assignées aux objets du scénario sont ignorées. 
     %La seule politique d'exécution qui pourrait faire sens serait que le premier client à valider un \trigger dans un scénario non partagé avertirait les clients suivants.
@@ -437,7 +434,7 @@ On dénote trois manières de partager l'information dans un scénario :
     
     \item Partage complet : il n'y a qu'une seule ligne temporelle commune à tous les clients. 
     Les annotations de groupes indiquent l'emplacement d'exécution des processus de contenu et la liste des clients devant parvenir à un consensus pour une expression donnée. 
-    Si par exemple la vitesse d'exécution d'une contrainte est modifiée en temps réel, cette modification est répercutée sur tous les clients.
+    Ainsi, si la vitesse d'exécution d'une contrainte est modifiée en temps réel, cette modification est répercutée sur tous les clients.
     
     Cela permet notamment de gérer la répartition d'objets à des niveaux hiérarchiques différents~: dans le scénario~\ref{scenar.hierarchy}, si le scénario racine est dans ce mode, alors on peut correctement faire exécuter les scénarios enfants en prenant en compte les groupes de leurs objets. 
     
@@ -461,10 +458,9 @@ On dénote trois manières de partager l'information dans un scénario :
     \item Mixte : il peut y avoir plusieurs lignes temporelles appartenant à différents groupes dans un même scénario. 
     Ces lignes peuvent ensuite se resynchroniser à un instant donné. 
     
-    On considère le graphe acyclique non orienté dont les nœuds temporels sont les sommets et les contraintes temporelles sont les arêtes. 
+    On considère le graphe acyclique non orienté dont les sommets sont les nœuds temporels et les arêtes  les contraintes temporelles. 
     Les lignes temporelles sont les ensembles de contraintes et nœuds connexes de ce graphe, tels que tous les éléments d'un tel ensemble soient associés au même groupe.
-    
-    Les annotations donnent l'emplacement d'exécution des contraintes, des processus, et de vérification des expressions. 
+    Les annotations servent à donner l'emplacement d'exécution des contraintes, des processus, et de la vérification des expressions. 
 %    Un client ne sait pas à l'avance si il va pouvoir se déclencher ou non. 
     
     Considérons le scénario~\ref{scenar.twobranches}. 
@@ -483,8 +479,8 @@ On dénote trois manières de partager l'information dans un scénario :
             \caption{Scénario écrit par le compositeur}
         \end{subfigure}
     
-    \begin{subfigure}{0.45\textwidth}\centering
-        \begin{tikzpicture}[scale = 0.4,shorten >=1pt,auto,node distance=2 cm]        
+    \begin{subfigure}{0.4\textwidth}\centering
+        \begin{tikzpicture}[scale = 0.2,shorten >=1pt,auto,node distance=1.5cm]        
         \small
          \node[state,inner sep=1pt, minimum size=0pt] (T0) {$T_0$};
          \node[state,inner sep=1pt, minimum size=0pt] (T1)[above right of=T0] {$T_1$};
@@ -558,7 +554,7 @@ Ce sont par exemple les expressions, leurs dates d'évaluation, et la vitesse d'
         \item Tous les clients valident ou nient l'expression.
     \end{itemize}
 
-	\item Dans le cas mixte, la synchronisation doit alors uniquement se faire à l'entrée ou à la sortie d'une branche.
+	\item Dans le cas mixte, la synchronisation doit alors uniquement se faire à l'entrée ou la sortie d'une branche.
 \end{itemize}
 
 On note plusieurs problèmes possibles : 
@@ -823,7 +819,7 @@ Néanmoins, ce travail n'a pas pour objectif d'encombrer le compositeur d'une fi
 Le système présenté en section précédente est agnostique à la topologie sous-jacente du réseau : on définit les messages qui doivent être envoyés et reçus, mais pas la manière dont ils transitent.
 %Maître-esclave pour l'édition.
 
-La mise en œuvre, réalisée en C++ en tant que plug-in à i-score, est dite « de référence »~: l'objectif est de valider l'approche, sans chercher les performances maximales.
+La mise en œuvre, réalisée en C++ en tant que plug-in à i-score, est dite « de référence »~: l'objectif est de valider l'approche, sans chercher à obtenir des performances maximales.
 Pour des raisons de simplicité, on choisit une topologie réseau en étoile : un maître gère le déroulement général de l'exécution. 
 Les différents clients communiquent au travers de ce maître pour les messages de balisage, avec les compromis que cela implique : 
 \begin{itemize}
